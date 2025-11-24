@@ -5,6 +5,7 @@ import Inputfield from "@/components/forms/Inputfield";
 import Selectfield from "@/components/forms/Selectfield";
 import { Button } from "@/components/ui/button";
 import { signUpWithEmail } from "@/lib/actions/auth.actions";
+import { Fetchnews } from "@/lib/actions/user.action";
 import { INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form"
@@ -31,6 +32,7 @@ const Signup = () => {
   const onSubmit = async (data: SignUpFormData) => {
     try {
       const result = await signUpWithEmail(data);
+      await Fetchnews();
       if(result.success) router.push('/');
     } catch (error) {
       console.error(error);
