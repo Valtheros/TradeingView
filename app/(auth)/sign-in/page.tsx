@@ -1,44 +1,52 @@
-'use client';
-import ContrySelectfield from "@/components/forms/ContrySelectfield";
+"use client";
 import FooterLink from "@/components/forms/FooterLink";
 import Inputfield from "@/components/forms/Inputfield";
-import Selectfield from "@/components/forms/Selectfield";
 import { Button } from "@/components/ui/button";
-import { INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
-import { useForm } from "react-hook-form"
+import { signInWithEmail } from "@/lib/actions/auth.actions";
+import { useRouter } from "next/navigation";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 
 const Signin = () => {
+  const router = useRouter();
   const {
     register,
     handleSubmit,
-    control,
     formState: { errors, isSubmitting },
   } = useForm<SignInFormData>({
     defaultValues: {
-      email: '',
-      password: '',
-    },mode: 'onBlur',
-  })
+      email: "",
+      password: "",
+    },
+    mode: "onBlur",
+  });
   const onSubmit = async (data: SignInFormData) => {
     try {
-      console.log(data);
+      const result = await signInWithEmail(data);
+      if (result.success) router.push("/");
     } catch (error) {
       console.error(error);
+      toast.error("Sign In failed", {
+        description:
+          error instanceof Error ? error.message : "Failed to Sign In.",
+      });
     }
-  }
+  };
   return (
     <>
       <h1 className="form-title">Sign In</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-
-
         <Inputfield
           name="email"
           label="Email"
           placeholder="valthers@gmail.com"
           register={register}
           error={errors.email}
-          validation={{ required: 'Email is required', patten: /^\w+@\w+\.\w+$/, message: "Please enter a valid email address" }}
+          validation={{
+            required: "Email is required",
+            patten: /^\w+@\w+\.\w+$/,
+            message: "Please enter a valid email address",
+          }}
         />
 
         <Inputfield
@@ -48,18 +56,25 @@ const Signin = () => {
           type="password"
           register={register}
           error={errors.password}
-          validation={{ required: 'Password is required', minLength: 8 }}
+          validation={{ required: "Password is required", minLength: 8 }}
         />
 
-
-        <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
-          {isSubmitting ? 'Singing In...' : 'Sign In'}
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="yellow-btn w-full mt-5"
+        >
+          {isSubmitting ? "Singing In..." : "Sign In"}
         </Button>
 
-        <FooterLink text="Don't have an account?" linkText="Create an account" href="/sign-up" />
+        <FooterLink
+          text="Don't have an account?"
+          linkText="Create an account"
+          href="/sign-up"
+        />
       </form>
     </>
-  )
-}
+  );
+};
 
 export default Signin;
