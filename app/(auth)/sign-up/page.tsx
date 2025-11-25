@@ -32,7 +32,6 @@ const Signup = () => {
   const onSubmit = async (data: SignUpFormData) => {
     try {
       const result = await signUpWithEmail(data);
-      await Fetchnews();
       if(result.success) router.push('/');
     } catch (error) {
       console.error(error);
