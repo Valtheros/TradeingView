@@ -70,10 +70,14 @@ export const sendSignUpEmail = inngest.createFunction(
 export const DailyNewsSummary = inngest.createFunction(
   { id: "daily-news-summary" },
   [{ event: "app/news.daily.fetched" }, { cron: "0 12 * * *" }],
-  async ({ step }) => {
-
+  async ({ event, step }) => {
     // Step #1: Get all users for news delivery
-    const users = await step.run("get-all-users", getAllUserForNews);
+    let users = await step.run("get-all-users", getAllUserForNews);
+
+    // Filter for specific user if triggered by signup (userId provided)
+    if (event.data && event.data.userId) {
+      users = users.filter((u) => u.id === event.data.userId);
+    }
 
     if (!users || users.length === 0)
       return {
@@ -140,7 +144,7 @@ export const DailyNewsSummary = inngest.createFunction(
       }
     }
     // Step #4: Persist summaries for in-app viewing
-    await step.run('save-news-summaries', async () => {
+    await step.run("save-news-summaries", async () => {
       await Promise.all(
         userNewsSummaries.map(async ({ user, newsContent }) => {
           if (!newsContent) return false;
@@ -151,15 +155,16 @@ export const DailyNewsSummary = inngest.createFunction(
             name: user.name,
             readableDate,
             dateISO,
-            newsContent
-          })
+            newsContent,
+          });
         })
-      )
-      return { success: true, message: 'Daily news summaries stored successfully' }
-    }
-    )
+      );
+      return {
+        success: true,
+        message: "Daily news summaries stored successfully",
+      };
+    });
 
-    return { success: true, message: 'Update news success' }
+    return { success: true, message: "Update news success" };
   }
-
 );
