@@ -1,4 +1,4 @@
-'use client';
+"use client";
 import ContrySelectfield from "@/components/forms/ContrySelectfield";
 import FooterLink from "@/components/forms/FooterLink";
 import Inputfield from "@/components/forms/Inputfield";
@@ -6,9 +6,13 @@ import Selectfield from "@/components/forms/Selectfield";
 import { Button } from "@/components/ui/button";
 import { signUpWithEmail } from "@/lib/actions/auth.actions";
 import { Fetchnews } from "@/lib/actions/user.action";
-import { INVESTMENT_GOALS, PREFERRED_INDUSTRIES, RISK_TOLERANCE_OPTIONS } from "@/lib/constants";
+import {
+  INVESTMENT_GOALS,
+  PREFERRED_INDUSTRIES,
+  RISK_TOLERANCE_OPTIONS,
+} from "@/lib/constants";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form"
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 
 const Signup = () => {
@@ -20,31 +24,35 @@ const Signup = () => {
     formState: { errors, isSubmitting },
   } = useForm<SignUpFormData>({
     defaultValues: {
-      fullName: '',
-      email: '',
-      password: '',
-      country: 'TH',
-      investmentGoals: 'Growth',
-      riskTolerance: 'Medium',
-      preferredIndustry: 'Technology',
-    },mode: 'onBlur',
-  })
+      fullName: "",
+      email: "",
+      password: "",
+      country: "TH",
+      investmentGoals: "Growth",
+      riskTolerance: "Medium",
+      preferredIndustry: "Technology",
+    },
+    mode: "onBlur",
+  });
   const onSubmit = async (data: SignUpFormData) => {
     try {
       const result = await signUpWithEmail(data);
-      if(result.success) {
-        if(result.data?.user.id) {
+      if (result.success) {
+        if (result.data?.user.id) {
           await Fetchnews(result.data.user.id);
         }
-        router.push('/');
-      }else{
+        router.push("/");
+      } else {
         toast.error(result.error);
       }
     } catch (error) {
       console.error(error);
       toast.error("Sign up failed", {
-        description: error instanceof Error ? error.message : "Failed to create an account.",
-      })
+        description:
+          error instanceof Error
+            ? error.message
+            : "Failed to create an account.",
+      });
     }
   };
 
@@ -58,9 +66,8 @@ const Signup = () => {
           placeholder="John Doe"
           register={register}
           error={errors.fullName}
-          validation={{ required: 'Full name is required', minLength: 2 }}
+          validation={{ required: "Full name is required", minLength: {value: 2, message: "Full name must be at least 2 characters"} }}
         />
-
 
         <Inputfield
           name="email"
@@ -68,7 +75,11 @@ const Signup = () => {
           placeholder="valthers@gmail.com"
           register={register}
           error={errors.email}
-          validation={{ required: 'Email is required', patten: /^\w+@\w+\.\w+$/, message: "Please enter a valid email address" }}
+          validation={{
+            required: "Email is required",
+            patten: /^\w+@\w+\.\w+$/,
+            message: "Please enter a valid email address",
+          }}
         />
 
         <Inputfield
@@ -78,7 +89,10 @@ const Signup = () => {
           type="password"
           register={register}
           error={errors.password}
-          validation={{ required: 'Password is required', minLength: 8 }}
+          validation={{
+            required: "Password is required",
+            minLength: {value: 8, message: "Password must be at least 8 characters"},
+          }}
         />
 
         <ContrySelectfield
@@ -117,11 +131,19 @@ const Signup = () => {
           required
         />
 
-        <Button type="submit" disabled={isSubmitting} className="yellow-btn w-full mt-5">
-          {isSubmitting ? 'Creating Account...' : 'Start Investing'}
+        <Button
+          type="submit"
+          disabled={isSubmitting}
+          className="yellow-btn w-full mt-5"
+        >
+          {isSubmitting ? "Creating Account..." : "Start Investing"}
         </Button>
 
-        <FooterLink text="Already have an account?" linkText="Sign In" href="/sign-in" />
+        <FooterLink
+          text="Already have an account?"
+          linkText="Sign In"
+          href="/sign-in"
+        />
       </form>
     </>
   );
