@@ -32,14 +32,22 @@ const Signup = () => {
   const onSubmit = async (data: SignUpFormData) => {
     try {
       const result = await signUpWithEmail(data);
-      if(result.success) router.push('/');
+      if(result.success) {
+        if(result.data?.user.id) {
+          await Fetchnews(result.data.user.id);
+        }
+        router.push('/');
+      }else{
+        toast.error(result.error);
+      }
     } catch (error) {
       console.error(error);
       toast.error("Sign up failed", {
         description: error instanceof Error ? error.message : "Failed to create an account.",
       })
     }
-  }
+  };
+
   return (
     <>
       <h1 className="form-title">Sign Up & Personalize</h1>
@@ -79,7 +87,7 @@ const Signup = () => {
           control={control}
           error={errors.country}
           required
-          />
+        />
 
         <Selectfield
           name="investmentGoals"
@@ -116,7 +124,7 @@ const Signup = () => {
         <FooterLink text="Already have an account?" linkText="Sign In" href="/sign-in" />
       </form>
     </>
-  )
-}
+  );
+};
 
-export default Signup
+export default Signup;

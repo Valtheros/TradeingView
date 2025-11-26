@@ -3,7 +3,6 @@ import { auth } from "@/lib/better-auth/auth";
 import { inngest } from "../inngest/client";
 import { headers } from "next/headers";
 
-import { Fetchnews } from "./user.action";
 
 export const signUpWithEmail = async ({
   email,
@@ -31,16 +30,11 @@ export const signUpWithEmail = async ({
           preferredIndustry: preferredIndustry,
         },
       });
-
-      // Trigger news generation for the new user immediately
-      if (response.user?.id) {
-        await Fetchnews(response.user.id);
-      }
     }
     return { success: true, data: response };
-  } catch (error) {
+  } catch (error: any) {
     console.log("Sign up failed", error);
-    return { success: false, error: "Sign up failed" };
+    return { success: false, error: error.message };
   }
 };
 
@@ -49,9 +43,10 @@ export const signOut = async () => {
     await auth.api.signOut({
       headers: await headers(),
     });
-  } catch (error) {
+    return { success: true, data: null };
+  } catch (error: any) {
     console.log("Sign out failed", error);
-    return { success: false, error: "Sign out failed" };
+    return { success: false, error: error.message };
   }
 };
 
@@ -62,8 +57,8 @@ export const signInWithEmail = async ({ email, password }: SignInFormData) => {
     });
 
     return { success: true, data: response };
-  } catch (error) {
-    console.log("Sign In failed", error);
-    return { success: false, error: "Sign In failed" };
+  } catch (error: any) {
+    console.error("Sign In failed", error);
+    return { success: false, error: error.message };
   }
 };

@@ -2,12 +2,33 @@
 
 import { connecttoDatabase } from "@/database/mongoose";
 import { inngest } from "../inngest/client";
+import { ObjectId } from "mongodb";
 
-export const getAllUserForNews = async () => {
+export const getAllUserForNews = async (userId?: string) => {
   try {
     const mongoose = await connecttoDatabase();
     const db = mongoose.connection.db;
     if (!db) throw new Error("Mongodb connection not connected");
+
+    //when user sign-up only (find by id but _id is objectId need to "new ObjectId(userId)") 
+    if (userId) {
+      const user = await db
+        .collection("user")
+        .findOne(
+          { _id: new ObjectId(userId) },
+          { projection: { _id: 1, id: 1, email: 1, name: 1 } }
+        );
+
+      if (!user) return [];
+
+      return [
+        {
+          id: user.id || user._id?.toString() || "",
+          email: user.email,
+          name: user.name,
+        },
+      ];
+    }
 
     const users = await db
       .collection("user")
@@ -39,5 +60,5 @@ export const Fetchnews = async (userId?: string) => {
   } catch (error) {
     console.log("Fetchnews failed", error);
     return { success: false, error: "Fetchnews failed" };
-  }
+  } 
 };

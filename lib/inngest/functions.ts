@@ -72,13 +72,8 @@ export const DailyNewsSummary = inngest.createFunction(
   [{ event: "app/news.daily.fetched" }, { cron: "0 12 * * *" }],
   async ({ event, step }) => {
     // Step #1: Get all users for news delivery
-    let users = await step.run("get-all-users", getAllUserForNews);
-
-    // Filter for specific user if triggered by signup (userId provided)
-    if (event.data && event.data.userId) {
-      users = users.filter((u) => u.id === event.data.userId);
-    }
-
+    let users = await step.run("get-all-users", async() => getAllUserForNews(event.data.userId));
+    
     if (!users || users.length === 0)
       return {
         success: false,
