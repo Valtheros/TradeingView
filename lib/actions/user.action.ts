@@ -60,5 +60,5 @@ export const Fetchnews = async (userId?: string) => {
   } catch (error) {
     console.log("Fetchnews failed", error);
     return { success: false, error: "Fetchnews failed" };
-  } 
+  }
 };
