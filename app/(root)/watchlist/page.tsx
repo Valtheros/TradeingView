@@ -3,6 +3,7 @@ import { searchStocks } from '@/lib/actions/finnhub.actions';
 import SearchCommand from '@/components/SearchCommand';
 import { WatchlistTable } from '@/components/WatchlistTable';
 import { getWatchlistWithData } from '@/lib/actions/getWatchlistWithData';
+export const dynamic = 'force-dynamic';
 
 const Watchlist = async () => {
   const watchlist = await getWatchlistWithData();
