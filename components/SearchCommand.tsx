@@ -53,7 +53,7 @@ export default function SearchCommand({
     }
   };
 
-  const debouncedSearch = useDebounce(handleSearch, 300);
+  const debouncedSearch = useDebounce(handleSearch, 500);
 
   useEffect(() => {
     debouncedSearch();

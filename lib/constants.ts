@@ -152,10 +152,11 @@ export const MARKET_DATA_WIDGET_CONFIG = {
             symbols: [
                 { name: 'NASDAQ:AAPL', displayName: 'Apple' },
                 { name: 'NASDAQ:GOOGL', displayName: 'Alphabet' },
+                { name: 'NASDAQ:NVDA', displayName: 'NVIDIA' },
                 { name: 'NASDAQ:MSFT', displayName: 'Microsoft' },
-                { name: 'NASDAQ:FB', displayName: 'Meta Platforms' },
-                { name: 'NYSE:ORCL', displayName: 'Oracle Corp' },
-                { name: 'NASDAQ:INTC', displayName: 'Intel Corp' },
+                { name: 'NASDAQ:META', displayName: 'Meta Platforms' },
+                { name: 'NASDAQ:AMD', displayName: 'AMD' },
+                { name: 'NASDAQ:TSLA', displayName: 'Tesla' },
             ],
         },
         {
