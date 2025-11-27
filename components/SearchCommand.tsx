@@ -57,7 +57,7 @@ export default function SearchCommand({
 
   useEffect(() => {
     debouncedSearch();
-  }, [searchTerm, debouncedSearch]);
+  }, [searchTerm]);
 
   const handleSelectStock = () => {
     setOpen(false);
