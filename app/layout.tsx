@@ -14,8 +14,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "TradeingView",
-  description: "For trading, by traders.",
+  title: "Stockmarkets",
+  description: "For investing, by investors.",
 };
 
 export default function RootLayout({

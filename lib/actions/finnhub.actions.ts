@@ -1,6 +1,13 @@
 "use server";
 
-import { getDateRange, validateArticle, formatArticle, formatChangePercent, formatMarketCapValue, formatPrice } from "@/lib/utils";
+import {
+  getDateRange,
+  validateArticle,
+  formatArticle,
+  formatChangePercent,
+  formatMarketCapValue,
+  formatPrice,
+} from "@/lib/utils";
 import { POPULAR_STOCK_SYMBOLS } from "@/lib/constants";
 import { cache } from "react";
 import { auth } from "../better-auth/auth";
@@ -113,6 +120,40 @@ export async function getNews(
   }
 }
 
+async function checkTradingViewSymbol(query: string) {
+  try {
+    const url = `https://symbol-search.tradingview.com/symbol_search/?text=${encodeURIComponent(
+      query
+    )}&hl=en`;
+    const response = await fetch(url, {
+      headers: {
+        Origin: "https://www.tradingview.com",
+      },
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (Array.isArray(data) && data.length > 0) {
+      return `${data[0].symbol}`;
+    }
+    return null;
+  } catch (error) {
+    console.error("Error checking TV symbol:", error);
+    return null;
+  }
+}
+
+async function checkFinnhubAccess(symbol: string, token: string) {
+  try {
+    const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(
+      symbol
+    )}&token=${token}`;
+    const res = await fetch(url, { cache: "no-store" });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
 export const searchStocks = cache(
   async (query?: string): Promise<StockWithWatchlistStatus[]> => {
     try {
@@ -127,7 +168,6 @@ export const searchStocks = cache(
 
       const token = process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
       if (!token) {
-        // If no token, log and return empty to avoid throwing per requirements
         console.error(
           "Error in stock search:",
           new Error("FINNHUB API key is not configured")
@@ -148,7 +188,6 @@ export const searchStocks = cache(
               const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(
                 sym
               )}&token=${token}`;
-              // Revalidate every hour
               const profile = await fetchJSON<any>(url, 3600);
               return { sym, profile } as { sym: string; profile: any };
             } catch (e) {
@@ -171,10 +210,7 @@ export const searchStocks = cache(
               displaySymbol: symbol,
               type: "Common Stock",
             };
-            // We don't include exchange in FinnhubSearchResult type, so carry via mapping later using profile
-            // To keep pipeline simple, attach exchange via closure map stage
-            // We'll reconstruct exchange when mapping to final type
-            (r as any).__exchange = exchange; // internal only
+            (r as any).__exchange = exchange;
             return r;
           })
           .filter((x): x is FinnhubSearchResult => Boolean(x));
@@ -186,29 +222,45 @@ export const searchStocks = cache(
         results = Array.isArray(data?.result) ? data.result : [];
       }
 
-      const mapped: StockWithWatchlistStatus[] = results
-        .map((r) => {
-          const upper = (r.symbol || "").toUpperCase();
-          const name = r.description || upper;
-          const exchangeFromDisplay =
-            (r.displaySymbol as string | undefined) || undefined;
-          const exchangeFromProfile = (r as any).__exchange as
-            | string
-            | undefined;
-          const exchange = exchangeFromDisplay || exchangeFromProfile || "US";
-          const type = r.type || "Stock";
-          const item: StockWithWatchlistStatus = {
-            symbol: upper,
-            name,
-            exchange,
-            type,
-            isInWatchlist: userWatchlistSymbols.includes(
-              r.symbol.toUpperCase()
-            ),
-          };
+      // Filter results: Check both TradingView existence and Finnhub access
+      // Limit to top 10 to avoid rate limits and slow response
+      const candidates = results.slice(0, 10);
+
+      const validResults = await Promise.all(
+        candidates.map(async (item) => {
+          // 1. Check TradingView
+          const tvSymbol = await checkTradingViewSymbol(item.symbol);
+          if (!tvSymbol) return null;
+
+          // 2. Check Finnhub Access (Quote)
+          const hasAccess = await checkFinnhubAccess(item.symbol, token);
+          if (!hasAccess) return null;
+
           return item;
         })
-        .slice(0, 15);
+      );
+
+      const filteredResults = validResults.filter(
+        (item): item is FinnhubSearchResult => item !== null
+      );
+
+      const mapped: StockWithWatchlistStatus[] = filteredResults.map((r) => {
+        const upper = (r.symbol || "").toUpperCase();
+        const name = r.description || upper;
+        const exchangeFromDisplay =
+          (r.displaySymbol as string | undefined) || undefined;
+        const exchangeFromProfile = (r as any).__exchange as string | undefined;
+        const exchange = exchangeFromDisplay || exchangeFromProfile || "US";
+        const type = r.type || "Stock";
+        const item: StockWithWatchlistStatus = {
+          symbol: upper,
+          name,
+          exchange,
+          type,
+          isInWatchlist: userWatchlistSymbols.includes(r.symbol.toUpperCase()),
+        };
+        return item;
+      });
 
       return mapped;
     } catch (err) {
@@ -247,7 +299,7 @@ export const getStocksDetails = cache(async (symbol: string) => {
 
     // Check if we got valid quote and profile data
     if (!quoteData?.c || !profileData?.name)
-      throw new Error('Invalid stock data received from API');
+      throw new Error("Invalid stock data received from API");
 
     const changePercent = quoteData.dp || 0;
     const peRatio = financialsData?.metric?.peNormalizedAnnual || null;
@@ -259,13 +311,13 @@ export const getStocksDetails = cache(async (symbol: string) => {
       changePercent,
       priceFormatted: formatPrice(quoteData.c),
       changeFormatted: formatChangePercent(changePercent),
-      peRatio: peRatio?.toFixed(1) || '—',
+      peRatio: peRatio?.toFixed(1) || "—",
       marketCapFormatted: formatMarketCapValue(
         profileData?.marketCapitalization || 0
       ),
     };
   } catch (error) {
     console.error(`Error fetching details for ${cleanSymbol}:`, error);
-    throw new Error('Failed to fetch stock details');
+    throw new Error("Failed to fetch stock details");
   }
 });
