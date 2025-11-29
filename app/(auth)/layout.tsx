@@ -20,7 +20,7 @@ const layout = async ({ children }: { children: React.ReactNode }) => {
         <section className="auth-right-section">
             <div className="z-10 relative lg:mt-4 lg:mb-16">
                 <blockquote className="auth-blockquote">
-                    This website is great, It have everything I need for trading.
+                    This website is great, It have everything I need for investment.
                 </blockquote>
                 <div className="flex items-center justify-between">
                     <div>
