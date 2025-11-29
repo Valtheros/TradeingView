@@ -120,25 +120,47 @@ export async function getNews(
   }
 }
 
-async function checkTradingViewSymbol(query: string) {
+async function checkTradingViewSymbol(query: string, company: string) {
   try {
     const url = `https://symbol-search.tradingview.com/symbol_search/?text=${encodeURIComponent(
       query
     )}&hl=en`;
+
     const response = await fetch(url, {
       headers: {
         Origin: "https://www.tradingview.com",
       },
     });
-    if (!response.ok) return null;
-    const data = await response.json();
-    if (Array.isArray(data) && data.length > 0) {
-      return `${data[0].symbol}`;
+
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data) && data.length > 0) {
+        return true;
+      }
     }
-    return null;
+
+    // If first search failed or returned empty, try searching by company name
+    const url2 = `https://symbol-search.tradingview.com/symbol_search/?text=${encodeURIComponent(
+      company
+    )}&hl=en`;
+
+    const response2 = await fetch(url2, {
+      headers: {
+        Origin: "https://www.tradingview.com",
+      },
+    });
+
+    if (response2.ok) {
+      const data2 = await response2.json();
+      if (Array.isArray(data2) && data2.length > 0) {
+        return true;
+      }
+    }
+
+    return false;
   } catch (error) {
     console.error("Error checking TV symbol:", error);
-    return null;
+    return false;
   }
 }
 
@@ -248,7 +270,10 @@ export const searchStocks = cache(
       const validResults = await Promise.all(
         candidates.map(async (item) => {
           // 1. Check TradingView
-          const tvSymbol = await checkTradingViewSymbol(item.symbol);
+          const tvSymbol = await checkTradingViewSymbol(
+            item.symbol,
+            item.description
+          );
           if (!tvSymbol) return null;
 
           // 2. Check Finnhub Access (Quote)
