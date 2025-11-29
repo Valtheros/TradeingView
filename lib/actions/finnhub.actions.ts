@@ -144,12 +144,31 @@ async function checkTradingViewSymbol(query: string) {
 
 async function checkFinnhubAccess(symbol: string, token: string) {
   try {
-    const url = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(
+    // Check Quote (Must have valid price)
+    const quoteUrl = `${FINNHUB_BASE_URL}/quote?symbol=${encodeURIComponent(
       symbol
     )}&token=${token}`;
-    const res = await fetch(url, { cache: "no-store" });
-    return res.ok;
-  } catch {
+    const quoteRes = await fetch(quoteUrl, { cache: "no-store" });
+
+    if (!quoteRes.ok) return false;
+    const quoteData = await quoteRes.json();
+    // Check if 'c' (current price) exists and is not 0 (matching getStocksDetails logic)
+    if (!quoteData || !quoteData.c) return false;
+
+    // Check Profile (Must have name)
+    const profileUrl = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(
+      symbol
+    )}&token=${token}`;
+    // Cache profile check for 1 hour to save API calls
+    const profileRes = await fetch(profileUrl, { next: { revalidate: 3600 } });
+
+    if (!profileRes.ok) return false;
+    const profileData = await profileRes.json();
+    if (!profileData || !profileData.name) return false;
+
+    return true;
+  } catch (error) {
+    console.error(`Error checking Finnhub access for ${symbol}:`, error);
     return false;
   }
 }

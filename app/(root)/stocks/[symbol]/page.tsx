@@ -11,6 +11,7 @@ import {
   COMPANY_PROFILE_WIDGET_CONFIG,
   COMPANY_FINANCIALS_WIDGET_CONFIG,
 } from '@/lib/constants';
+import { formatSymbolForTV } from '@/lib/formatSymBolFortv';
 import { notFound } from 'next/navigation';
 
 export default async function StockDetails({ params }: StockDetailsPageProps) {
@@ -20,11 +21,14 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
   const stockData = await getStocksDetails(symbol.toUpperCase());
   const watchlist = await getUserWatchlist();
 
+  const symbolForTV = await formatSymbolForTV(symbol, stockData.company);
+
   const isInWatchlist = watchlist.some(
     (item: WatchlistItem) => item.symbol === symbol.toUpperCase()
   );
 
   if (!stockData) notFound();
+  if (!symbolForTV) notFound();
 
   return (
     <div className='flex min-h-screen p-4 md:p-6 lg:p-8'>
@@ -33,20 +37,20 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
         <div className='flex flex-col gap-6'>
           <TradeingViewWidget
             scriptUrl={`${scriptUrl}symbol-info.js`}
-            config={SYMBOL_INFO_WIDGET_CONFIG(symbol)}
+            config={SYMBOL_INFO_WIDGET_CONFIG(symbolForTV)}
             height={170}
           />
 
           <TradeingViewWidget
             scriptUrl={`${scriptUrl}advanced-chart.js`}
-            config={CANDLE_CHART_WIDGET_CONFIG(symbol)}
+            config={CANDLE_CHART_WIDGET_CONFIG(symbolForTV)}
             classname='custom-chart'
             height={600}
           />
 
           <TradeingViewWidget
             scriptUrl={`${scriptUrl}advanced-chart.js`}
-            config={BASELINE_WIDGET_CONFIG(symbol)}
+            config={BASELINE_WIDGET_CONFIG(symbolForTV)}
             classname='custom-chart'
             height={600}
           />
@@ -65,19 +69,19 @@ export default async function StockDetails({ params }: StockDetailsPageProps) {
 
           <TradeingViewWidget
             scriptUrl={`${scriptUrl}technical-analysis.js`}
-            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(symbol)}
+            config={TECHNICAL_ANALYSIS_WIDGET_CONFIG(symbolForTV)}
             height={400}
           />
 
           <TradeingViewWidget
             scriptUrl={`${scriptUrl}company-profile.js`}
-            config={COMPANY_PROFILE_WIDGET_CONFIG(symbol)}
+            config={COMPANY_PROFILE_WIDGET_CONFIG(symbolForTV)}
             height={440}
           />
 
           <TradeingViewWidget
             scriptUrl={`${scriptUrl}financials.js`}
-            config={COMPANY_FINANCIALS_WIDGET_CONFIG(symbol)}
+            config={COMPANY_FINANCIALS_WIDGET_CONFIG(symbolForTV)}
             height={464}
           />
         </div>
