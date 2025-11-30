@@ -343,7 +343,7 @@ export const getStocksDetails = cache(async (symbol: string) => {
 
     // Check if we got valid quote and profile data
     if (!quoteData?.c || !profileData?.name)
-      throw new Error("Invalid stock data received from API");
+      return null;
 
     const changePercent = quoteData.dp || 0;
     const peRatio = financialsData?.metric?.peNormalizedAnnual || null;
@@ -362,6 +362,6 @@ export const getStocksDetails = cache(async (symbol: string) => {
     };
   } catch (error) {
     console.error(`Error fetching details for ${cleanSymbol}:`, error);
-    throw new Error("Failed to fetch stock details");
+    return null;
   }
 });
