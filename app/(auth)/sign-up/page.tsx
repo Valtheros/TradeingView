@@ -4,6 +4,7 @@ import FooterLink from "@/components/forms/FooterLink";
 import Inputfield from "@/components/forms/Inputfield";
 import Selectfield from "@/components/forms/Selectfield";
 import { Button } from "@/components/ui/button";
+import { authClient } from "@/lib/better-auth/auth-client";
 import { signUpWithEmail } from "@/lib/actions/auth.actions";
 import { Fetchnews } from "@/lib/actions/user.action";
 import {
@@ -38,12 +39,27 @@ const Signup = () => {
     try {
       const result = await signUpWithEmail(data);
       if (result.success) {
-        if (result.data?.user.id) {
+        if(result.data?.user.id){
           await Fetchnews(result.data.user.id);
         }
-        router.push("/");
+        localStorage.setItem("userEmail", data.email);
+        await authClient.emailOtp.sendVerificationOtp({
+          email: data.email,
+          type: "email-verification",
+          fetchOptions: {
+            onError: (ctx) => {
+              console.error("Failed to send OTP:", ctx.error);
+              toast.error(
+                "Failed to send verification email: " + ctx.error.message
+              );
+            },
+          },
+        });
+        toast.success("Account created! Please verify your email.");
+        router.push("/verify-email");
+        
       } else {
-        toast.error(result.error);
+        toast.error("Sign up failed. Please try again.");
       }
     } catch (error) {
       console.error(error);
@@ -66,7 +82,13 @@ const Signup = () => {
           placeholder="John Doe"
           register={register}
           error={errors.fullName}
-          validation={{ required: "Full name is required", minLength: {value: 2, message: "Full name must be at least 2 characters"} }}
+          validation={{
+            required: "Full name is required",
+            minLength: {
+              value: 2,
+              message: "Full name must be at least 2 characters",
+            },
+          }}
         />
 
         <Inputfield
@@ -91,7 +113,10 @@ const Signup = () => {
           error={errors.password}
           validation={{
             required: "Password is required",
-            minLength: {value: 8, message: "Password must be at least 8 characters"},
+            minLength: {
+              value: 8,
+              message: "Password must be at least 8 characters",
+            },
           }}
         />
 

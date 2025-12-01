@@ -3,7 +3,6 @@ import { auth } from "@/lib/better-auth/auth";
 import { inngest } from "../inngest/client";
 import { headers } from "next/headers";
 
-
 export const signUpWithEmail = async ({
   email,
   password,
