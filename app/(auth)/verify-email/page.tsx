@@ -13,11 +13,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 export default function VerifyEmailPage() {
+  const email = localStorage.getItem("userEmail");
+  if (!email) notFound();
+
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -54,7 +57,7 @@ export default function VerifyEmailPage() {
     setIsLoading(true);
     try {
       await authClient.emailOtp.verifyEmail({
-        email: localStorage.getItem("userEmail") || "", // Retrieve email from local storage or context
+        email: email,
         otp,
         fetchOptions: {
           onError: (ctx) => {
@@ -125,7 +128,6 @@ export default function VerifyEmailPage() {
               }`}
               disabled={timeLeft > 0}
               onClick={async () => {
-                const email = localStorage.getItem("userEmail");
                 if (!email) {
                   toast.error("Email not found");
                   return;
