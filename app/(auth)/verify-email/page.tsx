@@ -13,13 +13,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/better-auth/auth-client";
 import { Loader2 } from "lucide-react";
-import { notFound, useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
 export default function VerifyEmailPage() {
   const email = localStorage.getItem("userEmail");
-  if (!email) notFound();
+  if (!email) {
+    redirect("/sign-up")
+  }
 
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
