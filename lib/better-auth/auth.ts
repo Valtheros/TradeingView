@@ -19,6 +19,9 @@ export const getAuth = async () => {
 
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: process.env.BETTER_AUTH_URL,
+    trustedOrigins: process.env.TRUSTED_ORIGINS
+      ? process.env.TRUSTED_ORIGINS.split(",")
+      : [],
     emailAndPassword: {
       enabled: true,
       disableSignUp: false,
@@ -28,7 +31,7 @@ export const getAuth = async () => {
       autoSignIn: false,
     },
     emailVerification: {
-      autoSignInAfterVerification: true
+      autoSignInAfterVerification: true,
     },
     plugins: [
       nextCookies(),
