@@ -3,6 +3,7 @@ import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { connecttoDatabase } from "@/database/mongoose";
 import { nextCookies } from "better-auth/next-js";
 import { emailOTP } from "better-auth/plugins";
+import { sendOTPEmail } from "../nodemailer";
 
 let authInstance: ReturnType<typeof betterAuth> | null = null;
 
@@ -39,7 +40,6 @@ export const getAuth = async () => {
         async sendVerificationOTP({ email, otp, type }) {
           try {
             console.log("Attempting to send OTP email to:", email);
-            const { sendOTPEmail } = await import("@/lib/nodemailer");
             await sendOTPEmail({
               email,
               otp,

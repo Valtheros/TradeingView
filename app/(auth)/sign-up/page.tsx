@@ -4,7 +4,6 @@ import FooterLink from "@/components/forms/FooterLink";
 import Inputfield from "@/components/forms/Inputfield";
 import Selectfield from "@/components/forms/Selectfield";
 import { Button } from "@/components/ui/button";
-import { authClient } from "@/lib/better-auth/auth-client";
 import { signUpWithEmail } from "@/lib/actions/auth.actions";
 import { Fetchnews } from "@/lib/actions/user.action";
 import {
@@ -39,25 +38,13 @@ const Signup = () => {
     try {
       const result = await signUpWithEmail(data);
       if (result.success) {
-        if(result.data?.user.id){
+        if (result.data?.user.id) {
           await Fetchnews(result.data.user.id);
         }
-        localStorage.setItem("userEmail", data.email);
-        await authClient.emailOtp.sendVerificationOtp({
-          email: data.email,
-          type: "email-verification",
-          fetchOptions: {
-            onError: (ctx) => {
-              console.error("Failed to send OTP:", ctx.error);
-              toast.error(
-                "Failed to send verification email: " + ctx.error.message
-              );
-            },
-          },
-        });
+        // localStorage.setItem("userEmail", data.email); // Removed: Security vulnerability
+        // OTP is sent automatically or handled by server
         toast.success("Account created! Please verify your email.");
         router.push("/verify-email");
-        
       } else {
         toast.error("Sign up failed. Please try again.");
       }
