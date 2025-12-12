@@ -75,12 +75,29 @@ export default function VerifyEmailForm() {
     const result = await resendVerificationOtp();
     if (result.success) {
       toast.success("Verification code resent!");
-      const expiry = Date.now() + 60 * 1000;
+      const cooldown = 10;
+      const expiry = Date.now() + cooldown * 1000;
       localStorage.setItem("resendOtpExpiry", expiry.toString());
-      setTimeLeft(60);
+      setTimeLeft(cooldown);
     } else {
+      // ถ้า server ส่ง retryAfter มา ให้ใช้เวลานั้น
+      if (result.retryAfter) {
+        const expiry = Date.now() + result.retryAfter * 1000;
+        localStorage.setItem("resendOtpExpiry", expiry.toString());
+        setTimeLeft(result.retryAfter);
+      }
       toast.error(result.error || "Failed to resend code");
     }
+  };
+
+  // Format time display - show mm:ss if > 60 seconds
+  const formatTime = (seconds: number) => {
+    if (seconds >= 60) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}:${String(secs).padStart(2, "0")}`;
+    }
+    return `${seconds}s`;
   };
 
   return (
@@ -134,7 +151,9 @@ export default function VerifyEmailForm() {
               disabled={timeLeft > 0}
               onClick={handleResend}
             >
-              {timeLeft > 0 ? `Resend Code (${timeLeft}s)` : "Resend Code"}
+              {timeLeft > 0
+                ? `Resend Code (${formatTime(timeLeft)})`
+                : "Resend Code"}
             </button>
           </p>
         </CardFooter>

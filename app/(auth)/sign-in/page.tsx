@@ -48,7 +48,7 @@ const Signin = () => {
           error={errors.email}
           validation={{
             required: "Email is required",
-            patten: /^\w+@\w+\.\w+$/,
+            pattern: /^\w+@\w+\.\w+$/,
             message: "Please enter a valid email address",
           }}
         />
@@ -71,7 +71,7 @@ const Signin = () => {
           disabled={isSubmitting}
           className="yellow-btn w-full mt-5"
         >
-          {isSubmitting ? "Singing In..." : "Sign In"}
+          {isSubmitting ? "Signing In..." : "Sign In"}
         </Button>
 
         <FooterLink

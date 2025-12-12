@@ -2,6 +2,8 @@
 import { auth } from "@/lib/better-auth/auth";
 import { inngest } from "../inngest/client";
 import { headers, cookies } from "next/headers";
+import { connecttoDatabase } from "@/database/mongoose";
+import { checkRateLimit } from "@/database/models/rateLimit.model";
 
 export const signUpWithEmail = async ({
   email,
@@ -112,6 +114,18 @@ export const resendVerificationOtp = async () => {
   }
 
   try {
+    // Connect to database and check rate limit
+    await connecttoDatabase();
+    const { allowed, retryAfter } = await checkRateLimit(`otp:${email}`);
+
+    if (!allowed) {
+      return {
+        success: false,
+        error: `Too many attempts. Please wait ${retryAfter} seconds before trying again.`,
+        retryAfter,
+      };
+    }
+
     await (auth.api as any).sendVerificationOTP({
       body: { email, type: "email-verification" },
       headers: await headers(),
