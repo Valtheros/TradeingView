@@ -18,7 +18,7 @@ export default function SearchCommand({
   renderAs = "button",
   label = "Add stock",
   initialStocks,
-}: SearchCommandProps) {
+}: SearchCommandprops) {
   const [open, setOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [loading, setLoading] = useState(false);
