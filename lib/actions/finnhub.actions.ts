@@ -16,8 +16,6 @@ import { redirect } from "next/navigation";
 import { getWatchlistSymbolsByEmail } from "./watchlist.actions";
 
 const FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
-const NEXT_PUBLIC_FINNHUB_API_KEY =
-  process.env.NEXT_PUBLIC_FINNHUB_API_KEY ?? "";
 
 async function fetchJSON<T>(
   url: string,
@@ -43,7 +41,10 @@ export async function getNews(
 ): Promise<MarketNewsArticle[]> {
   try {
     const range = getDateRange(5);
-    const token = process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
+    const token =
+      process.env.FINNHUB_API_KEY ||
+      process.env.NEXT_PUBLIC_FINNHUB_API_KEY ||
+      "";
     if (!token) {
       throw new Error("FINNHUB API key is not configured");
     }
@@ -207,7 +208,10 @@ export const searchStocks = cache(
         session.user.email
       );
 
-      const token = process.env.FINNHUB_API_KEY ?? NEXT_PUBLIC_FINNHUB_API_KEY;
+      const token =
+        process.env.FINNHUB_API_KEY ||
+        process.env.NEXT_PUBLIC_FINNHUB_API_KEY ||
+        "";
       if (!token) {
         console.error(
           "Error in stock search:",
@@ -319,19 +323,23 @@ export const getStocksDetails = cache(async (symbol: string) => {
   const cleanSymbol = symbol.trim().toUpperCase();
 
   try {
+    const token =
+      process.env.FINNHUB_API_KEY ||
+      process.env.NEXT_PUBLIC_FINNHUB_API_KEY ||
+      "";
     const [quote, profile, financials] = await Promise.all([
       fetchJSON(
         // Price data - no caching for accuracy
-        `${FINNHUB_BASE_URL}/quote?symbol=${cleanSymbol}&token=${NEXT_PUBLIC_FINNHUB_API_KEY}`
+        `${FINNHUB_BASE_URL}/quote?symbol=${cleanSymbol}&token=${token}`
       ),
       fetchJSON(
         // Company info - cache 1hr (rarely changes)
-        `${FINNHUB_BASE_URL}/stock/profile2?symbol=${cleanSymbol}&token=${NEXT_PUBLIC_FINNHUB_API_KEY}`,
+        `${FINNHUB_BASE_URL}/stock/profile2?symbol=${cleanSymbol}&token=${token}`,
         3600
       ),
       fetchJSON(
         // Financial metrics (P/E, etc.) - cache 30min
-        `${FINNHUB_BASE_URL}/stock/metric?symbol=${cleanSymbol}&metric=all&token=${NEXT_PUBLIC_FINNHUB_API_KEY}`,
+        `${FINNHUB_BASE_URL}/stock/metric?symbol=${cleanSymbol}&metric=all&token=${token}`,
         1800
       ),
     ]);
@@ -342,8 +350,7 @@ export const getStocksDetails = cache(async (symbol: string) => {
     const financialsData = financials as FinancialsData;
 
     // Check if we got valid quote and profile data
-    if (!quoteData?.c || !profileData?.name)
-      return null;
+    if (!quoteData?.c || !profileData?.name) return null;
 
     const changePercent = quoteData.dp || 0;
     const peRatio = financialsData?.metric?.peNormalizedAnnual || null;
