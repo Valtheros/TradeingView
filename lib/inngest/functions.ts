@@ -124,7 +124,7 @@ export const DailyNewsSummary = inngest.createFunction(
         );
 
         const response = await step.ai.infer(`summarize-news-${user.email}`, {
-          model: step.ai.models.gemini({ model: "gemini-2.5-pro" }),
+          model: step.ai.models.gemini({ model: "gemini-2.5-flash" }),
           body: {
             contents: [{ role: "user", parts: [{ text: prompt }] }],
           },
