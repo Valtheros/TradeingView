@@ -28,7 +28,7 @@ export const sendSignUpEmail = inngest.createFunction(
 
     const response = await step.ai.infer("generate-welcome-intro", {
       model: step.ai.models.gemini({
-        model: "gemini-2.5-pro",
+        model: "gemini-2.5-flash",
       }),
       body: {
         contents: [

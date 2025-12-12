@@ -134,9 +134,11 @@ export const WELCOME_EMAIL_TEMPLATE = `<!DOCTYPE html>
                             </table>
                             
                             <!-- Footer Text -->
-                            <p class="mobile-text dark-text-muted" style="margin: 40px 0 0 0; font-size: 14px; line-height: 1.5; color: #CCDADC !important; text-align: center;">
-                                © 2025 Marketstock
-                            </p>
+                            <div style="text-align: center; margin: 40px 0 0 0; border-top: 1px solid #30333A; padding-top: 20px;">
+                                <p style="margin: 0; font-size: 14px; line-height: 1.5; color: #6b7280 !important;">
+                                    © 2025 StockMarket
+                                </p>
+                            </div>
                         </td>
                     </tr>
                 </table>
