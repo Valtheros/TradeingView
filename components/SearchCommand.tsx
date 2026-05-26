@@ -57,7 +57,11 @@ export default function SearchCommand({
 
   useEffect(() => {
     debouncedSearch();
-  }, [searchTerm]);
+  }, [debouncedSearch, searchTerm]);
+
+  useEffect(() => {
+    if (!isSearchMode) setStocks(initialStocks);
+  }, [initialStocks, isSearchMode]);
 
   const handleSelectStock = () => {
     setOpen(false);
@@ -66,10 +70,9 @@ export default function SearchCommand({
   };
 
   // Handle watchlist changes status change
-  const handleWatchlistChange = async (symbol: string, isAdded: boolean) => {
-    // Update current stocks
-    setStocks(
-      initialStocks?.map((stock) =>
+  const handleWatchlistChange = (symbol: string, isAdded: boolean) => {
+    setStocks((currentStocks) =>
+      currentStocks?.map((stock) =>
         stock.symbol === symbol ? { ...stock, isInWatchlist: isAdded } : stock
       ) || []
     );
@@ -116,7 +119,7 @@ export default function SearchCommand({
                 {` `}({displayStocks?.length || 0})
               </div>
               {displayStocks?.map((stock, i) => (
-                <li key={`${stock.symbol}-${i}`} className="search-item"> {/*-{i} fix-same-key-issue*/}
+                <li key={`${stock.symbol}-${i}`} className="search-item">
                   <Link
                     href={`/stocks/${stock.symbol}`}
                     onClick={handleSelectStock}
@@ -130,7 +133,7 @@ export default function SearchCommand({
                       </div>
                     </div>
                     <WatchlistButton
-                    type="icon"
+                      type="icon"
                       symbol={stock.symbol}
                       company={stock.name}
                       isInWatchlist={stock.isInWatchlist}

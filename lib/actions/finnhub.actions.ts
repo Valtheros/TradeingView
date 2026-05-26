@@ -10,12 +10,32 @@ import {
 } from "@/lib/utils";
 import { POPULAR_STOCK_SYMBOLS } from "@/lib/constants";
 import { cache } from "react";
-import { auth } from "../better-auth/auth";
+import { getAuth } from "../better-auth/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getWatchlistSymbolsByEmail } from "./watchlist.actions";
+import { resolveTradingViewSymbol } from "../tradingview/symbol-search";
 
 const FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
+
+type FinnhubCompanyProfile = {
+  name?: string;
+  ticker?: string;
+  exchange?: string;
+};
+
+type SearchResultWithMetadata = FinnhubSearchResult & {
+  exchange?: string;
+  tradingViewSymbol?: string;
+  tradingViewExchange?: string;
+};
+
+type ValidSearchResult = SearchResultWithMetadata & {
+  tradingViewSymbol: string;
+  tradingViewExchange: string;
+};
+
+const getFinnhubApiKey = () => process.env.FINNHUB_API_KEY || "";
 
 async function fetchJSON<T>(
   url: string,
@@ -41,10 +61,7 @@ export async function getNews(
 ): Promise<MarketNewsArticle[]> {
   try {
     const range = getDateRange(5);
-    const token =
-      process.env.FINNHUB_API_KEY ||
-      process.env.NEXT_PUBLIC_FINNHUB_API_KEY ||
-      "";
+    const token = getFinnhubApiKey();
     if (!token) {
       throw new Error("FINNHUB API key is not configured");
     }
@@ -121,50 +138,6 @@ export async function getNews(
   }
 }
 
-async function checkTradingViewSymbol(query: string, company: string) {
-  try {
-    const url = `https://symbol-search.tradingview.com/symbol_search/?text=${encodeURIComponent(
-      query
-    )}&hl=en`;
-
-    const response = await fetch(url, {
-      headers: {
-        Origin: "https://www.tradingview.com",
-      },
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      if (Array.isArray(data) && data.length > 0) {
-        return true;
-      }
-    }
-
-    // If first search failed or returned empty, try searching by company name
-    const url2 = `https://symbol-search.tradingview.com/symbol_search/?text=${encodeURIComponent(
-      company
-    )}&hl=en`;
-
-    const response2 = await fetch(url2, {
-      headers: {
-        Origin: "https://www.tradingview.com",
-      },
-    });
-
-    if (response2.ok) {
-      const data2 = await response2.json();
-      if (Array.isArray(data2) && data2.length > 0) {
-        return true;
-      }
-    }
-
-    return false;
-  } catch (error) {
-    console.error("Error checking TV symbol:", error);
-    return false;
-  }
-}
-
 async function checkFinnhubAccess(symbol: string, token: string) {
   try {
     // Check Quote (Must have valid price)
@@ -199,6 +172,7 @@ async function checkFinnhubAccess(symbol: string, token: string) {
 export const searchStocks = cache(
   async (query?: string): Promise<StockWithWatchlistStatus[]> => {
     try {
+      const auth = await getAuth();
       const session = await auth.api.getSession({
         headers: await headers(),
       });
@@ -208,10 +182,7 @@ export const searchStocks = cache(
         session.user.email
       );
 
-      const token =
-        process.env.FINNHUB_API_KEY ||
-        process.env.NEXT_PUBLIC_FINNHUB_API_KEY ||
-        "";
+      const token = getFinnhubApiKey();
       if (!token) {
         console.error(
           "Error in stock search:",
@@ -222,7 +193,7 @@ export const searchStocks = cache(
 
       const trimmed = typeof query === "string" ? query.trim() : "";
 
-      let results: FinnhubSearchResult[] = [];
+      let results: SearchResultWithMetadata[] = [];
 
       if (!trimmed) {
         // Fetch top 10 popular symbols' profiles
@@ -233,32 +204,32 @@ export const searchStocks = cache(
               const url = `${FINNHUB_BASE_URL}/stock/profile2?symbol=${encodeURIComponent(
                 sym
               )}&token=${token}`;
-              const profile = await fetchJSON<any>(url, 3600);
-              return { sym, profile } as { sym: string; profile: any };
+              const profile = await fetchJSON<FinnhubCompanyProfile>(url, 3600);
+              return { sym, profile };
             } catch (e) {
               console.error("Error fetching profile2 for", sym, e);
-              return { sym, profile: null } as { sym: string; profile: any };
+              return { sym, profile: null };
             }
           })
         );
 
-        results = profiles
-          .map(({ sym, profile }) => {
+        results = profiles.reduce<SearchResultWithMetadata[]>(
+          (acc, { sym, profile }) => {
             const symbol = sym.toUpperCase();
-            const name: string | undefined =
-              profile?.name || profile?.ticker || undefined;
-            const exchange: string | undefined = profile?.exchange || undefined;
-            if (!name) return undefined;
-            const r: FinnhubSearchResult = {
+            const name = profile?.name || profile?.ticker || undefined;
+            if (!name) return acc;
+
+            acc.push({
               symbol,
               description: name,
               displaySymbol: symbol,
               type: "Common Stock",
-            };
-            (r as any).__exchange = exchange;
-            return r;
-          })
-          .filter((x): x is FinnhubSearchResult => Boolean(x));
+              exchange: profile?.exchange,
+            });
+            return acc;
+          },
+          []
+        );
       } else {
         const url = `${FINNHUB_BASE_URL}/search?q=${encodeURIComponent(
           trimmed
@@ -273,38 +244,39 @@ export const searchStocks = cache(
 
       const validResults = await Promise.all(
         candidates.map(async (item) => {
-          // 1. Check TradingView
-          const tvSymbol = await checkTradingViewSymbol(
+          const tradingViewMatch = await resolveTradingViewSymbol(
             item.symbol,
             item.description
           );
-          if (!tvSymbol) return null;
+          if (!tradingViewMatch) return null;
 
-          // 2. Check Finnhub Access (Quote)
           const hasAccess = await checkFinnhubAccess(item.symbol, token);
           if (!hasAccess) return null;
 
-          return item;
+          return {
+            ...item,
+            tradingViewSymbol: tradingViewMatch.widgetSymbol,
+            tradingViewExchange: tradingViewMatch.exchange,
+          };
         })
       );
 
       const filteredResults = validResults.filter(
-        (item): item is FinnhubSearchResult => item !== null
+        (item): item is ValidSearchResult => item !== null
       );
 
       const mapped: StockWithWatchlistStatus[] = filteredResults.map((r) => {
         const upper = (r.symbol || "").toUpperCase();
         const name = r.description || upper;
-        const exchangeFromDisplay =
-          (r.displaySymbol as string | undefined) || undefined;
-        const exchangeFromProfile = (r as any).__exchange as string | undefined;
-        const exchange = exchangeFromDisplay || exchangeFromProfile || "US";
+        const exchange =
+          r.tradingViewExchange || r.exchange || r.displaySymbol || "US";
         const type = r.type || "Stock";
         const item: StockWithWatchlistStatus = {
           symbol: upper,
           name,
           exchange,
           type,
+          tradingViewSymbol: r.tradingViewSymbol,
           isInWatchlist: userWatchlistSymbols.includes(r.symbol.toUpperCase()),
         };
         return item;
@@ -323,10 +295,10 @@ export const getStocksDetails = cache(async (symbol: string) => {
   const cleanSymbol = symbol.trim().toUpperCase();
 
   try {
-    const token =
-      process.env.FINNHUB_API_KEY ||
-      process.env.NEXT_PUBLIC_FINNHUB_API_KEY ||
-      "";
+    const token = getFinnhubApiKey();
+    if (!token) {
+      throw new Error("FINNHUB API key is not configured");
+    }
     const [quote, profile, financials] = await Promise.all([
       fetchJSON(
         // Price data - no caching for accuracy

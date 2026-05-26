@@ -7,21 +7,25 @@ const useTradingViewWidget = (
 ) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   useEffect(() => {
-    if (!containerRef.current) return;
-    if (containerRef.current.dataset.loaded) return;
-    containerRef.current.innerHTML = `<div class="tradingview-widget-container__widget" style="height: ${height}px; width: 100%;"></div>`;
+    const container = containerRef.current;
+    if (!container) return;
+    if (container.dataset.loaded) return;
+
+    const widgetContainer = document.createElement("div");
+    widgetContainer.className = "tradingview-widget-container__widget";
+    widgetContainer.style.height = `${height}px`;
+    widgetContainer.style.width = "100%";
+
     const script = document.createElement("script");
     script.src = scriptUrl;
     script.async = true;
     script.innerHTML = JSON.stringify(config);
 
-    containerRef.current.appendChild(script);
-    containerRef.current.dataset.loaded = "true";
+    container.replaceChildren(widgetContainer, script);
+    container.dataset.loaded = "true";
     return () => {
-      if (containerRef.current) {
-        containerRef.current.innerHTML = "";
-        delete containerRef.current.dataset.loaded;
-      }
+      container.replaceChildren();
+      delete container.dataset.loaded;
     };
   }, [scriptUrl, config, height]);
   return containerRef;

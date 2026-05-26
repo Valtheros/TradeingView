@@ -143,7 +143,7 @@ export default function VerifyEmailForm() {
             )}
           </Button>
           <p className="text-center text-sm text-zinc-500">
-            Didn't receive the code?{" "}
+            Didn&apos;t receive the code?{" "}
             <button
               className={`text-yellow-500 hover:underline ${
                 timeLeft > 0 ? "cursor-not-allowed opacity-50" : ""

@@ -1,5 +1,5 @@
 import { headers } from "next/headers";
-import { auth } from "../better-auth/auth";
+import { getAuth } from "../better-auth/auth";
 import { redirect } from "next/navigation";
 import { Watchlist } from "@/database/models/watchlist.model";
 import { getStocksDetails } from "./finnhub.actions";
@@ -7,6 +7,7 @@ import { getStocksDetails } from "./finnhub.actions";
 // Get user's watchlist with stock data
 export const getWatchlistWithData = async () => {
   try {
+    const auth = await getAuth();
     const session = await auth.api.getSession({
       headers: await headers(),
     });

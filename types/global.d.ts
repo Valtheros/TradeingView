@@ -78,6 +78,7 @@ declare global {
     name: string;
     exchange: string;
     type: string;
+    tradingViewSymbol?: string;
   };
 
   type StockWithWatchlistStatus = Stock & {
@@ -89,6 +90,7 @@ declare global {
     description: string;
     displaySymbol?: string;
     type: string;
+    exchange?: string;
   };
 
   type FinnhubSearchResponse = {
