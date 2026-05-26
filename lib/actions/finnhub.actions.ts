@@ -15,6 +15,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { getWatchlistSymbolsByEmail } from "./watchlist.actions";
 import { resolveTradingViewSymbol } from "../tradingview/symbol-search";
+import { getFinnhubApiKey } from "../finnhub/env";
 
 const FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
 
@@ -34,8 +35,6 @@ type ValidSearchResult = SearchResultWithMetadata & {
   tradingViewSymbol: string;
   tradingViewExchange: string;
 };
-
-const getFinnhubApiKey = () => process.env.FINNHUB_API_KEY || "";
 
 async function fetchJSON<T>(
   url: string,

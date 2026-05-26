@@ -27,6 +27,7 @@ async function importTsModule(relativePath) {
 const { selectBestTradingViewMatch } = await importTsModule(
   "../lib/tradingview/symbol-utils.ts"
 );
+const { getFinnhubApiKey } = await importTsModule("../lib/finnhub/env.ts");
 
 test("selects the company stock when a suffixed Finnhub symbol returns unrelated results", () => {
   const match = selectBestTradingViewMatch("AIR.PA", "Airbus SE", [
@@ -90,4 +91,21 @@ test("normalizes class-share punctuation when matching TradingView symbols", () 
   );
 
   assert.equal(match?.widgetSymbol, "NYSE:BRK.B");
+});
+
+test("reads the server Finnhub key and falls back to the legacy public key", () => {
+  assert.equal(
+    getFinnhubApiKey({
+      FINNHUB_API_KEY: "server-key",
+      NEXT_PUBLIC_FINNHUB_API_KEY: "legacy-key",
+    }),
+    "server-key"
+  );
+
+  assert.equal(
+    getFinnhubApiKey({
+      NEXT_PUBLIC_FINNHUB_API_KEY: "legacy-key",
+    }),
+    "legacy-key"
+  );
 });

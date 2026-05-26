@@ -32,7 +32,6 @@ const createAuthInstance = async () => {
       autoSignInAfterVerification: true,
     },
     plugins: [
-      nextCookies(),
       emailOTP({
         async sendVerificationOTP({ email, otp }) {
           try {
@@ -47,6 +46,7 @@ const createAuthInstance = async () => {
           }
         },
       }),
+      nextCookies(),
     ],
   });
 };

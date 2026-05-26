@@ -353,16 +353,12 @@
   }
   .summary-html ul,
   .summary-html ol {
-    @apply pl-5 space-y-2 text-gray-300;
-  }
-  .summary-html ul {
-    @apply list-disc;
-  }
-  .summary-html ol {
-    @apply list-decimal;
+    @apply space-y-2 text-gray-300;
+    list-style: none;
+    padding-left: 0;
   }
   .summary-html li {
-    @apply marker:text-yellow-500;
+    @apply text-gray-300;
   }
   .summary-html a {
     @apply text-yellow-400 underline-offset-4;
