@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useRouter } from "next/navigation";
 import { Button } from "./ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut } from "lucide-react";
 import NavItems from "./NavItems";
 import { signOut } from "@/lib/actions/auth.actions";
@@ -18,7 +18,7 @@ import { toast } from "sonner";
 const UserDropdown = ({ user, initialStocks }: { user: User, initialStocks: StockWithWatchlistStatus[] }) => {
   const router = useRouter();
 
-  const handleSingOut = async () => {
+  const handleSignOut = async () => {
     const result = await signOut();
     if (result.success) {
       router.push("/sign-in");
@@ -63,7 +63,7 @@ const UserDropdown = ({ user, initialStocks }: { user: User, initialStocks: Stoc
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator className="bg-gray-600" />
-      <DropdownMenuItem onClick={handleSingOut} className="text-md text-gray-100 font-medium focus:text-yellow-500 transition-colors cursor-pointer">
+      <DropdownMenuItem onClick={handleSignOut} className="text-md text-gray-100 font-medium focus:text-yellow-500 transition-colors cursor-pointer">
         <LogOut className="h-4 w-4 mr-2 hidden sm:block" /> Logout
       </DropdownMenuItem>
       <DropdownMenuSeparator className="hidden sm:block bg-gray-600" />

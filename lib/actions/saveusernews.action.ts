@@ -1,17 +1,31 @@
 "use server";
 
 import { connecttoDatabase } from "@/database/mongoose";
+import { sanitizeSummaryHtml } from "@/lib/sanitize";
+import type { ObjectId } from "mongodb";
 
 const COLLECTION_NAME = "news_summaries";
 
-const mapSummary = (doc: any): UserNewsSummary => ({
+type NewsSummaryDocument = {
+  _id?: ObjectId;
+  userId: string;
+  email: string;
+  name?: string;
+  readableDate: string;
+  dateISO: string;
+  newsContent: string;
+  createdAt?: Date;
+  updatedAt?: Date;
+};
+
+const mapSummary = (doc: NewsSummaryDocument): UserNewsSummary => ({
   id: doc._id?.toString() ?? `${doc.userId}-${doc.dateISO}`,
   userId: doc.userId,
   email: doc.email,
   name: doc.name,
   readableDate: doc.readableDate,
   dateISO: doc.dateISO,
-  newsContent: doc.newsContent,
+  newsContent: sanitizeSummaryHtml(doc.newsContent),
   createdAt: doc.createdAt,
   updatedAt: doc.updatedAt,
 });
@@ -41,7 +55,7 @@ export const saveUserNewsSummary = async ({
           name,
           readableDate,
           dateISO,
-          newsContent,
+          newsContent: sanitizeSummaryHtml(newsContent),
         },
         $setOnInsert: { createdAt: now },
         $currentDate: { updatedAt: true },
@@ -68,7 +82,7 @@ export const getRecentNewsSummaries = async (
     if (!db) throw new Error("MongoDB connection not found");
 
     const docs = await db
-      .collection(COLLECTION_NAME)
+      .collection<NewsSummaryDocument>(COLLECTION_NAME)
       .find({ userId })
       .sort({ dateISO: -1, updatedAt: -1 })
       .limit(limit)

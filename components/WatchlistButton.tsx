@@ -1,12 +1,11 @@
 'use client';
 
-import { useDebounce } from '@/hooks/useDebounce';
 import {
   addWatchlistItem,
   removeFromWatchlist,
 } from '@/lib/actions/watchlist.actions';
 import { Star, Trash2 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { toast } from 'sonner';
 
 const WatchlistButton = ({
@@ -18,41 +17,59 @@ const WatchlistButton = ({
   onWatchlistChange,
 }: WatchlistButtonProps) => {
   const [added, setAdded] = useState<boolean>(!!isInWatchlist);
+  const [pending, setPending] = useState(false);
+
+  useEffect(() => {
+    setAdded(!!isInWatchlist);
+  }, [isInWatchlist]);
 
   const label = useMemo(() => {
     if (type === 'icon') return added ? '' : '';
     return added ? 'Remove from Watchlist' : 'Add to Watchlist';
   }, [added, type]);
 
-  // Handle adding/removing stocks from watchlist
-  const toggleWatchlist = async () => {
-    const result = added
-      ? await removeFromWatchlist(symbol)
-      : await addWatchlistItem(symbol, company);
+  const toggleWatchlist = async (nextAdded: boolean) => {
+    const result = nextAdded
+      ? await addWatchlistItem(symbol, company)
+      : await removeFromWatchlist(symbol);
 
     if (result.success) {
-      toast.success(added ? 'Removed from Watchlist' : 'Added to Watchlist', {
+      toast.success(nextAdded ? 'Added to Watchlist' : 'Removed from Watchlist', {
         description: `${company} ${
-          added ? 'removed from' : 'added to'
+          nextAdded ? 'added to' : 'removed from'
         } your watchlist`,
       });
 
-      // Notify parent component of watchlist change for state synchronization
-      onWatchlistChange?.(symbol, !added);
+      onWatchlistChange?.(symbol, nextAdded);
+      return true;
     }
+
+    toast.error(result.message || 'Unable to update watchlist');
+    return false;
   };
 
-  // Debounce the toggle function to prevent rapid API calls (300ms delay)
-  const debouncedToggle = useDebounce(toggleWatchlist, 300);
-
-  // Click handler that provides optimistic UI updates
-  const handleClick = (e: React.MouseEvent) => {
-    // Prevent event bubbling and default behavior
+  const handleClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
+    if (pending) return;
 
-    setAdded(!added);
-    debouncedToggle();
+    const previous = added;
+    const nextAdded = !added;
+    setAdded(nextAdded);
+    setPending(true);
+
+    try {
+      const success = await toggleWatchlist(nextAdded);
+      if (!success) setAdded(previous);
+    } catch (error) {
+      setAdded(previous);
+      toast.error('Unable to update watchlist', {
+        description:
+          error instanceof Error ? error.message : 'Please try again.',
+      });
+    } finally {
+      setPending(false);
+    }
   };
 
   if (type === 'icon') {
@@ -69,6 +86,7 @@ const WatchlistButton = ({
             : `Add ${symbol} to watchlist`
         }
         className={`watchlist-icon-btn ${added ? 'watchlist-icon-added' : ''}`}
+        disabled={pending}
         onClick={handleClick}
       >
         <Star fill={added ? 'currentColor' : 'none'} />
@@ -79,6 +97,7 @@ const WatchlistButton = ({
   return (
     <button
       className={`watchlist-btn ${added ? 'watchlist-remove' : ''}`}
+      disabled={pending}
       onClick={handleClick}
     >
       {showTrashIcon && added ? <Trash2 /> : null}
