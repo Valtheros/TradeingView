@@ -2,29 +2,12 @@ import Image from "next/image";
 import Link from "next/link";
 import NavItems from "./NavItems";
 import UserDropdown from "./UserDropdown";
-import { searchStocks } from "@/lib/actions/finnhub.actions";
+import LanguageToggle from "./LanguageToggle";
 
-const Header = async({user}: {user: User}) => {
-  const initialStocks = await searchStocks();
-  return (
-    <header className="sticky top-0 header">
-      <div className="container header-wrapper">
-        <Link href="/">
-          <Image
-            src="/assets/icons/logo.svg"
-            alt="logo"
-            width={140}
-            height={32}
-            className="h-8 w-auto curser-pointer"
-          />
-        </Link>
-        <nav className="hidden sm:block">
-          <NavItems initialStocks={initialStocks} />
-        </nav>
-        <UserDropdown user={user} initialStocks={initialStocks} />
-      </div>
-    </header>
-  );
-};
-
-export default Header;
+export default function Header({ user }: { user: User }) {
+  return <header className="app-header"><div className="app-header-inner">
+    <Link href="/" className="brand-link" aria-label="StockMarket"><Image src="/assets/icons/logo.svg" alt="StockMarket" width={1138} height={218} style={{ height: "auto" }} priority /></Link>
+    <NavItems />
+    <div className="header-controls"><LanguageToggle className="desktop-language" /><UserDropdown user={user} /></div>
+  </div></header>;
+}

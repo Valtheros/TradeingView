@@ -17,55 +17,43 @@ import {
 } from "@/lib/actions/auth.actions";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
+import { useLanguage } from "@/components/LanguageProvider";
+
+const remainingCooldown = () => Math.max(0, Math.ceil((Number(localStorage.getItem("resendOtpExpiry")) - Date.now()) / 1000)) || 0;
+const subscribeCooldown = (callback: () => void) => {
+  const timer = setInterval(callback, 1000);
+  window.addEventListener("storage", callback);
+  window.addEventListener("otp-cooldown", callback);
+  return () => { clearInterval(timer); window.removeEventListener("storage", callback); window.removeEventListener("otp-cooldown", callback); };
+};
 
 export default function VerifyEmailForm() {
+  const { dictionary } = useLanguage();
+  const copy = dictionary.verifyEmail;
   const [otp, setOtp] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
-  const [timeLeft, setTimeLeft] = useState(0);
-
-  useEffect(() => {
-    const expiry = localStorage.getItem("resendOtpExpiry");
-    if (expiry) {
-      const remaining = Math.ceil((parseInt(expiry) - Date.now()) / 1000);
-      if (remaining > 0) {
-        setTimeLeft(remaining);
-      } else {
-        localStorage.removeItem("resendOtpExpiry");
-      }
-    }
-  }, []);
-
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timerId = setTimeout(() => {
-        setTimeLeft(timeLeft - 1);
-      }, 1000);
-      return () => clearTimeout(timerId);
-    } else {
-      localStorage.removeItem("resendOtpExpiry");
-    }
-  }, [timeLeft]);
+  const timeLeft = useSyncExternalStore(subscribeCooldown, remainingCooldown, () => 0);
 
   const handleVerify = async () => {
     if (!otp) {
-      toast.error("Please enter the verification code");
+      toast.error(copy.codeRequired);
       return;
     }
     setIsLoading(true);
     try {
       const result = await verifyEmailWithOtp(otp);
       if (result.success) {
-        toast.success("Email verified successfully!");
+        toast.success(copy.success);
         router.push("/");
       } else {
-        toast.error(result.error || "Failed to verify email");
+        toast.error(result.error || copy.failed);
       }
     } catch (error) {
       console.error(error);
-      toast.error("Failed to verify email");
+      toast.error(copy.failed);
     } finally {
       setIsLoading(false);
     }
@@ -74,19 +62,19 @@ export default function VerifyEmailForm() {
   const handleResend = async () => {
     const result = await resendVerificationOtp();
     if (result.success) {
-      toast.success("Verification code resent!");
+      toast.success(copy.resendSuccess);
       const cooldown = 10;
       const expiry = Date.now() + cooldown * 1000;
       localStorage.setItem("resendOtpExpiry", expiry.toString());
-      setTimeLeft(cooldown);
+      window.dispatchEvent(new Event("otp-cooldown"));
     } else {
       // ถ้า server ส่ง retryAfter มา ให้ใช้เวลานั้น
       if (result.retryAfter) {
         const expiry = Date.now() + result.retryAfter * 1000;
         localStorage.setItem("resendOtpExpiry", expiry.toString());
-        setTimeLeft(result.retryAfter);
+        window.dispatchEvent(new Event("otp-cooldown"));
       }
-      toast.error(result.error || "Failed to resend code");
+      toast.error(result.error || copy.resendFailed);
     }
   };
 
@@ -105,21 +93,21 @@ export default function VerifyEmailForm() {
       <Card className="w-full max-w-md border-zinc-800 bg-zinc-900 text-zinc-100">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-white">
-            Verify Your Email
+            {copy.title}
           </CardTitle>
           <CardDescription className="text-zinc-400">
-            Enter the 6-digit code sent to your email address.
+            {copy.description}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid w-full items-center gap-4">
             <div className="flex flex-col space-y-1.5">
               <Label htmlFor="otp" className="text-zinc-300">
-                Verification Code
+                {copy.codeLabel}
               </Label>
               <Input
                 id="otp"
-                placeholder="123456"
+                placeholder={copy.codePlaceholder}
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 className="border-zinc-700 bg-zinc-800 text-white placeholder:text-zinc-500 focus:border-yellow-500 focus:ring-yellow-500"
@@ -136,14 +124,14 @@ export default function VerifyEmailForm() {
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Verifying...
+                {copy.submitting}
               </>
             ) : (
-              "Verify Email"
+              copy.submit
             )}
           </Button>
           <p className="text-center text-sm text-zinc-500">
-            Didn&apos;t receive the code?{" "}
+            {copy.noCode}{" "}
             <button
               className={`text-yellow-500 hover:underline ${
                 timeLeft > 0 ? "cursor-not-allowed opacity-50" : ""
@@ -152,8 +140,8 @@ export default function VerifyEmailForm() {
               onClick={handleResend}
             >
               {timeLeft > 0
-                ? `Resend Code (${formatTime(timeLeft)})`
-                : "Resend Code"}
+                ? copy.resendWithTime.replace("{time}", formatTime(timeLeft))
+                : copy.resend}
             </button>
           </p>
         </CardFooter>

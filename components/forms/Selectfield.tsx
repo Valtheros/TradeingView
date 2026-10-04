@@ -7,6 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { useLanguage } from "../LanguageProvider";
 const Selectfield = ({
   name,
   label,
@@ -16,6 +17,7 @@ const Selectfield = ({
   error,
   required = false,
 }: SelectFieldProps) => {
+  const { dictionary } = useLanguage();
   return (
     <div className="space-y-2">
       <Label htmlFor={name} className="form-label">
@@ -25,7 +27,12 @@ const Selectfield = ({
         name={name}
         control={control}
         rules={{
-          required: required ? `Please select ${label.toLowerCase()}` : false,
+          required: required
+            ? dictionary.selectField.required.replace(
+                "{label}",
+                label.toLowerCase()
+              )
+            : false,
         }}
         render={({ field }) => (
           <Select value={field.value} onValueChange={field.onChange}>

@@ -198,6 +198,33 @@ Apple Stock Jumped After Great Earnings Report
 </div>
 </div>`
 
+export const buildNewsSummaryPrompt = (
+  locale: "en" | "th",
+  newsData: MarketNewsArticle[]
+) => {
+  const languageInstruction =
+    locale === "th"
+      ? `\n\nLANGUAGE REQUIREMENTS:\n- Write the entire summary in natural Thai for Thai investors.\n- Keep ticker symbols, company names, numbers, currencies, and source names unchanged when appropriate.\n- Translate UI labels inside the generated content, including section names, "Bottom Line", and "Read Full Story".\n- Use concise Thai explanations that are easy for beginner investors to understand.\n- Return ONLY clean HTML content. Do not wrap the answer in markdown.`
+      : `\n\nLANGUAGE REQUIREMENTS:\n- Write the entire summary in plain English.\n- Return ONLY clean HTML content. Do not wrap the answer in markdown.`;
+
+  return NEWS_SUMMARY_PROMPT.replace(
+    "{{newsData}}",
+    JSON.stringify(newsData, null, 2)
+  ).concat(languageInstruction);
+};
+
+export const buildTranslateNewsSummaryPrompt = (html: string) => `Translate this market news summary HTML into natural Thai for Thai investors.
+
+Requirements:
+- Preserve the exact HTML tags, class names, inline styles, links, and structure.
+- Translate visible English text into Thai, including headings, bullet points, "Bottom Line", and link labels.
+- Keep ticker symbols, company names, source names, numbers, percentages, currencies, and URLs unchanged when appropriate.
+- Do not add new articles or remove any articles.
+- Return ONLY clean HTML content with no markdown, no code block, and no explanation.
+
+HTML:
+${html}`;
+
 export const TRADINGVIEW_SYMBOL_MAPPING_PROMPT = `You are an expert in financial markets and trading platforms. Your task is to find the correct TradingView symbol that corresponds to a given Finnhub stock symbol.
 
 Stock information from Finnhub:

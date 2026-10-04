@@ -15,6 +15,9 @@
 
 # next.js
 /.next/
+/.next-build/
+/output/
+/.playwright-cli/
 /out/
 
 # production

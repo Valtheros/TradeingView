@@ -1,0 +1,375 @@
+import { dailyCopy } from "./daily-copy";
+
+export const LOCALE_COOKIE = "stockmarket-locale";
+export const LOCALES = ["en", "th"] as const;
+export type Locale = (typeof LOCALES)[number];
+
+export const DEFAULT_LOCALE: Locale = "en";
+
+export const isLocale = (value: unknown): value is Locale =>
+  typeof value === "string" && LOCALES.includes(value as Locale);
+
+export const dictionaries = {
+  en: {
+    daily: dailyCopy.en,
+    common: {
+      appName: "StockMarket",
+      language: "Language",
+      english: "EN",
+      thai: "TH",
+      search: "Search",
+      loading: "Loading...",
+      unavailable: "N/A",
+    },
+    nav: {
+      dashboard: "Today",
+      search: "Search",
+      news: "News",
+      watchlist: "Watchlist",
+    },
+    authLayout: {
+      testimonial:
+        "This website is great, It have everything I need for investment.",
+      author: "- Valtheros.",
+      role: "Investor",
+      dashboardPreviewAlt: "Dashboard Preview",
+    },
+    signIn: {
+      title: "Sign In",
+      emailLabel: "Email",
+      emailPlaceholder: "valthers@gmail.com",
+      emailRequired: "Email is required",
+      emailInvalid: "Please enter a valid email address",
+      passwordLabel: "Password",
+      passwordPlaceholder: "Enter your password",
+      passwordRequired: "Password is required",
+      passwordMin: "Password must be at least 8 characters",
+      submit: "Sign In",
+      submitting: "Signing In...",
+      failed: "Sign In failed",
+      failedDescription: "Failed to Sign In.",
+      noAccount: "Don't have an account?",
+      createAccount: "Create an account",
+    },
+    signUp: {
+      title: "Sign Up & Personalize",
+      fullNameLabel: "Full Name",
+      fullNamePlaceholder: "John Doe",
+      fullNameRequired: "Full name is required",
+      fullNameMin: "Full name must be at least 2 characters",
+      emailLabel: "Email",
+      emailPlaceholder: "valthers@gmail.com",
+      emailRequired: "Email is required",
+      emailInvalid: "Please enter a valid email address",
+      passwordLabel: "Password",
+      passwordPlaceholder: "Enter your password",
+      passwordRequired: "Password is required",
+      passwordMin: "Password must be at least 8 characters",
+      countryLabel: "Country",
+      investmentGoalsLabel: "Investment Goals",
+      investmentGoalsPlaceholder: "Select your investment goals",
+      riskToleranceLabel: "Risk Tolerance",
+      riskTolerancePlaceholder: "Select your risk level",
+      preferredIndustryLabel: "Preferred Industry",
+      preferredIndustryPlaceholder: "Select your preferred industry",
+      submit: "Start Investing",
+      submitting: "Creating Account...",
+      success: "Account created! Please verify your email.",
+      failed: "Sign up failed",
+      failedRetry: "Sign up failed. Please try again.",
+      failedDescription: "Failed to create an account.",
+      hasAccount: "Already have an account?",
+      signIn: "Sign In",
+    },
+    verifyEmail: {
+      title: "Verify Your Email",
+      description: "Enter the 6-digit code sent to your email address.",
+      codeLabel: "Verification Code",
+      codePlaceholder: "123456",
+      codeRequired: "Please enter the verification code",
+      submit: "Verify Email",
+      submitting: "Verifying...",
+      success: "Email verified successfully!",
+      failed: "Failed to verify email",
+      resendSuccess: "Verification code resent!",
+      resendFailed: "Failed to resend code",
+      noCode: "Didn't receive the code?",
+      resend: "Resend Code",
+      resendWithTime: "Resend Code ({time})",
+    },
+    countrySelect: {
+      select: "Select your country...",
+      search: "Search countries...",
+      empty: "No country found.",
+      help: "Helps us show market data and news relevant to you.",
+    },
+    selectField: {
+      required: "Please select {label}",
+    },
+    options: {
+      investmentGoals: {
+        Growth: "Growth",
+        Income: "Income",
+        Balanced: "Balanced",
+        Conservative: "Conservative",
+      },
+      riskTolerance: {
+        Low: "Low",
+        Medium: "Medium",
+        High: "High",
+      },
+      preferredIndustries: {
+        Technology: "Technology",
+        Healthcare: "Healthcare",
+        Finance: "Finance",
+        Energy: "Energy",
+        "Consumer Goods": "Consumer Goods",
+      },
+    },
+    searchCommand: {
+      addStock: "Add stock",
+      placeholder: "Search stocks...",
+      loading: "Loading stocks...",
+      noResults: "No results found",
+      noStocks: "No stocks available",
+      results: "Search results",
+      popular: "Popular stocks",
+    },
+    watchlist: {
+      title: "Watchlist",
+      emptyTitle: "Your watchlist is empty",
+      emptyDescription:
+        "Start building your watchlist by searching for stocks and clicking the star icon to add them.",
+      add: "Add to Watchlist",
+      remove: "Remove from Watchlist",
+      added: "Added to Watchlist",
+      removed: "Removed from Watchlist",
+      addedDescription: "{company} added to your watchlist",
+      removedDescription: "{company} removed from your watchlist",
+      updateFailed: "Unable to update watchlist",
+      tryAgain: "Please try again.",
+      addSymbol: "Add {symbol} to watchlist",
+      removeSymbol: "Remove {symbol} from watchlist",
+      table: {
+        company: "Company",
+        symbol: "Symbol",
+        price: "Price",
+        change: "Change",
+        marketCap: "Market Cap",
+        peRatio: "P/E Ratio",
+        action: "Action",
+      },
+    },
+    news: {
+      eyebrow: "Daily digest",
+      title: "Summary",
+      description:
+        "AI-crafted recap of the latest news tailored to your watchlist.",
+      lastUpdated: "Last updated {date}",
+      noSummary: "No summary yet",
+      generatedFor: "Generated for {date}",
+      empty:
+        "We haven't generated a summary for you yet. Check back after the next scheduled digest.",
+      generationQueued:
+        "We're generating your Thai news summary in the background.",
+      showingFallback:
+        "Showing your English summary while the Thai version is being prepared.",
+      previous: "Previous digests",
+      dateLocale: "en-US",
+    },
+    userMenu: {
+      logout: "Logout",
+    },
+  },
+  th: {
+    daily: dailyCopy.th,
+    common: {
+      appName: "StockMarket",
+      language: "ภาษา",
+      english: "EN",
+      thai: "TH",
+      search: "ค้นหา",
+      loading: "กำลังโหลด...",
+      unavailable: "ไม่มีข้อมูล",
+    },
+    nav: {
+      dashboard: "วันนี้",
+      search: "ค้นหา",
+      news: "ข่าว",
+      watchlist: "รายการติดตาม",
+    },
+    authLayout: {
+      testimonial:
+        "เว็บไซต์นี้ดีมาก มีทุกอย่างที่ผมต้องใช้สำหรับการลงทุน",
+      author: "- Valtheros.",
+      role: "นักลงทุน",
+      dashboardPreviewAlt: "ตัวอย่างแดชบอร์ด",
+    },
+    signIn: {
+      title: "เข้าสู่ระบบ",
+      emailLabel: "อีเมล",
+      emailPlaceholder: "valthers@gmail.com",
+      emailRequired: "กรุณากรอกอีเมล",
+      emailInvalid: "กรุณากรอกอีเมลให้ถูกต้อง",
+      passwordLabel: "รหัสผ่าน",
+      passwordPlaceholder: "กรอกรหัสผ่านของคุณ",
+      passwordRequired: "กรุณากรอกรหัสผ่าน",
+      passwordMin: "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร",
+      submit: "เข้าสู่ระบบ",
+      submitting: "กำลังเข้าสู่ระบบ...",
+      failed: "เข้าสู่ระบบไม่สำเร็จ",
+      failedDescription: "ไม่สามารถเข้าสู่ระบบได้",
+      noAccount: "ยังไม่มีบัญชี?",
+      createAccount: "สร้างบัญชี",
+    },
+    signUp: {
+      title: "สมัครสมาชิกและตั้งค่าโปรไฟล์",
+      fullNameLabel: "ชื่อ-นามสกุล",
+      fullNamePlaceholder: "John Doe",
+      fullNameRequired: "กรุณากรอกชื่อ-นามสกุล",
+      fullNameMin: "ชื่อต้องมีอย่างน้อย 2 ตัวอักษร",
+      emailLabel: "อีเมล",
+      emailPlaceholder: "valthers@gmail.com",
+      emailRequired: "กรุณากรอกอีเมล",
+      emailInvalid: "กรุณากรอกอีเมลให้ถูกต้อง",
+      passwordLabel: "รหัสผ่าน",
+      passwordPlaceholder: "กรอกรหัสผ่านของคุณ",
+      passwordRequired: "กรุณากรอกรหัสผ่าน",
+      passwordMin: "รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร",
+      countryLabel: "ประเทศ",
+      investmentGoalsLabel: "เป้าหมายการลงทุน",
+      investmentGoalsPlaceholder: "เลือกเป้าหมายการลงทุน",
+      riskToleranceLabel: "ระดับความเสี่ยงที่รับได้",
+      riskTolerancePlaceholder: "เลือกระดับความเสี่ยง",
+      preferredIndustryLabel: "อุตสาหกรรมที่สนใจ",
+      preferredIndustryPlaceholder: "เลือกอุตสาหกรรมที่สนใจ",
+      submit: "เริ่มลงทุน",
+      submitting: "กำลังสร้างบัญชี...",
+      success: "สร้างบัญชีแล้ว กรุณายืนยันอีเมลของคุณ",
+      failed: "สมัครสมาชิกไม่สำเร็จ",
+      failedRetry: "สมัครสมาชิกไม่สำเร็จ กรุณาลองอีกครั้ง",
+      failedDescription: "ไม่สามารถสร้างบัญชีได้",
+      hasAccount: "มีบัญชีอยู่แล้ว?",
+      signIn: "เข้าสู่ระบบ",
+    },
+    verifyEmail: {
+      title: "ยืนยันอีเมลของคุณ",
+      description: "กรอกรหัส 6 หลักที่ส่งไปยังอีเมลของคุณ",
+      codeLabel: "รหัสยืนยัน",
+      codePlaceholder: "123456",
+      codeRequired: "กรุณากรอกรหัสยืนยัน",
+      submit: "ยืนยันอีเมล",
+      submitting: "กำลังยืนยัน...",
+      success: "ยืนยันอีเมลสำเร็จ",
+      failed: "ยืนยันอีเมลไม่สำเร็จ",
+      resendSuccess: "ส่งรหัสยืนยันอีกครั้งแล้ว",
+      resendFailed: "ส่งรหัสอีกครั้งไม่สำเร็จ",
+      noCode: "ยังไม่ได้รับรหัส?",
+      resend: "ส่งรหัสอีกครั้ง",
+      resendWithTime: "ส่งรหัสอีกครั้ง ({time})",
+    },
+    countrySelect: {
+      select: "เลือกประเทศของคุณ...",
+      search: "ค้นหาประเทศ...",
+      empty: "ไม่พบประเทศ",
+      help: "ช่วยให้เราแสดงข้อมูลตลาดและข่าวที่เกี่ยวข้องกับคุณ",
+    },
+    selectField: {
+      required: "กรุณาเลือก{label}",
+    },
+    options: {
+      investmentGoals: {
+        Growth: "เติบโต",
+        Income: "รายได้",
+        Balanced: "สมดุล",
+        Conservative: "ระมัดระวัง",
+      },
+      riskTolerance: {
+        Low: "ต่ำ",
+        Medium: "ปานกลาง",
+        High: "สูง",
+      },
+      preferredIndustries: {
+        Technology: "เทคโนโลยี",
+        Healthcare: "สุขภาพ",
+        Finance: "การเงิน",
+        Energy: "พลังงาน",
+        "Consumer Goods": "สินค้าอุปโภคบริโภค",
+      },
+    },
+    searchCommand: {
+      addStock: "เพิ่มหุ้น",
+      placeholder: "ค้นหาหุ้น...",
+      loading: "กำลังโหลดหุ้น...",
+      noResults: "ไม่พบผลลัพธ์",
+      noStocks: "ยังไม่มีหุ้นให้แสดง",
+      results: "ผลการค้นหา",
+      popular: "หุ้นยอดนิยม",
+    },
+    watchlist: {
+      title: "รายการติดตาม",
+      emptyTitle: "รายการติดตามของคุณยังว่างอยู่",
+      emptyDescription:
+        "เริ่มสร้างรายการติดตามโดยค้นหาหุ้น แล้วกดไอคอนดาวเพื่อเพิ่มหุ้น",
+      add: "เพิ่มในรายการติดตาม",
+      remove: "ลบออกจากรายการติดตาม",
+      added: "เพิ่มในรายการติดตามแล้ว",
+      removed: "ลบออกจากรายการติดตามแล้ว",
+      addedDescription: "เพิ่ม {company} ในรายการติดตามของคุณแล้ว",
+      removedDescription: "ลบ {company} ออกจากรายการติดตามของคุณแล้ว",
+      updateFailed: "ไม่สามารถอัปเดตรายการติดตามได้",
+      tryAgain: "กรุณาลองอีกครั้ง",
+      addSymbol: "เพิ่ม {symbol} ในรายการติดตาม",
+      removeSymbol: "ลบ {symbol} ออกจากรายการติดตาม",
+      table: {
+        company: "บริษัท",
+        symbol: "สัญลักษณ์",
+        price: "ราคา",
+        change: "เปลี่ยนแปลง",
+        marketCap: "มูลค่าตลาด",
+        peRatio: "P/E",
+        action: "จัดการ",
+      },
+    },
+    news: {
+      eyebrow: "สรุปข่าวรายวัน",
+      title: "สรุปข่าว",
+      description: "สรุปข่าวล่าสุดด้วย AI ตามรายการติดตามของคุณ",
+      lastUpdated: "อัปเดตล่าสุด {date}",
+      noSummary: "ยังไม่มีสรุปข่าว",
+      generatedFor: "สร้างสำหรับ {date}",
+      empty:
+        "เรายังไม่ได้สร้างสรุปข่าวให้คุณ กลับมาตรวจอีกครั้งหลังรอบสรุปข่าวถัดไป",
+      previous: "สรุปข่าวก่อนหน้า",
+      generationQueued:
+        "กำลังสร้างสรุปข่าวภาษาไทยให้คุณในเบื้องหลัง",
+      showingFallback:
+        "ตอนนี้แสดงสรุปข่าวภาษาอังกฤษไปก่อน ระหว่างที่ระบบเตรียมเวอร์ชันภาษาไทย",
+      dateLocale: "th-TH",
+    },
+    userMenu: {
+      logout: "ออกจากระบบ",
+    },
+  },
+} as const;
+
+type Widen<T> = T extends string
+  ? string
+  : T extends Record<string, unknown>
+    ? { [K in keyof T]: Widen<T[K]> }
+    : T;
+
+export type Dictionary = Widen<(typeof dictionaries)[typeof DEFAULT_LOCALE]>;
+
+export const getDictionary = (locale: Locale): Dictionary =>
+  dictionaries[locale];
+
+export const interpolate = (
+  template: string,
+  values: Record<string, string | number>
+) =>
+  Object.entries(values).reduce(
+    (message, [key, value]) =>
+      message.replaceAll(`{${key}}`, String(value)),
+    template
+  );

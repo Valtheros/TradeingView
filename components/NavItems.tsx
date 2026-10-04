@@ -1,43 +1,21 @@
 "use client";
-import { NAV_ITEMS } from "@/lib/constants";
+
+import { House, Newspaper, Star } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useLanguage } from "./LanguageProvider";
 import SearchCommand from "./SearchCommand";
 
-const NavItems = ({initialStocks}: {initialStocks: StockWithWatchlistStatus[]}) => {
+export default function NavItems({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
-  const isActive = (path: string) => {
-    if (path === "/") return pathname === "/";
-    return pathname.startsWith(path);
-  };
-  return (
-    <ul className="flex flex-col sm:flex-row p-2 gap-3 sm:gap-10 font-medium">
-      {NAV_ITEMS.map(({ label, href }) => {
-        if (href === "/search")
-          return (
-            <li key="search-trigger">
-              <SearchCommand
-                renderAs="text"
-                label="Search"
-                initialStocks={initialStocks}
-              />
-            </li>
-          );
-        return (
-          <li key={href}>
-            <Link
-              href={href}
-              className={`hover:text-yellow-500 transition-colors ${
-                isActive(href) ? "text-gray-100" : ""
-              }`}
-            >
-              {label}
-            </Link>
-          </li>
-        );
-      })}
-    </ul>
-  );
-};
-
-export default NavItems;
+  const { dictionary } = useLanguage();
+  const items = [
+    { href: "/", label: dictionary.nav.dashboard, Icon: House },
+    { href: "/watchlist", label: dictionary.nav.watchlist, Icon: Star },
+    { href: "/news", label: dictionary.nav.news, Icon: Newspaper },
+  ];
+  return <nav className={mobile ? "mobile-nav" : "desktop-nav"} aria-label={mobile ? "Mobile" : "Main"}>
+    {items.map(({ href, label, Icon }) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}><Icon size={20} /><span>{label}</span></Link>)}
+    <SearchCommand renderAs="text" label={dictionary.nav.search} />
+  </nav>;
+}

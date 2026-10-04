@@ -1,9 +1,9 @@
 export const NAV_ITEMS = [
-    { href: '/', label: 'Dashboard' },
-    { href: '/search', label: 'Search' },
-    { href: '/news', label: 'News' },
-    { href: '/watchlist', label: 'Watchlist' },
-];
+    { href: '/', labelKey: 'dashboard' },
+    { href: '/search', labelKey: 'search' },
+    { href: '/news', labelKey: 'news' },
+    { href: '/watchlist', labelKey: 'watchlist' },
+] as const;
 
 // Sign-up form select options
 export const INVESTMENT_GOALS = [
@@ -11,13 +11,13 @@ export const INVESTMENT_GOALS = [
     { value: 'Income', label: 'Income' },
     { value: 'Balanced', label: 'Balanced' },
     { value: 'Conservative', label: 'Conservative' },
-];
+] as const;
 
 export const RISK_TOLERANCE_OPTIONS = [
     { value: 'Low', label: 'Low' },
     { value: 'Medium', label: 'Medium' },
     { value: 'High', label: 'High' },
-];
+] as const;
 
 export const PREFERRED_INDUSTRIES = [
     { value: 'Technology', label: 'Technology' },
@@ -25,7 +25,7 @@ export const PREFERRED_INDUSTRIES = [
     { value: 'Finance', label: 'Finance' },
     { value: 'Energy', label: 'Energy' },
     { value: 'Consumer Goods', label: 'Consumer Goods' },
-];
+] as const;
 
 export const ALERT_TYPE_OPTIONS = [
     { value: 'upper', label: 'Upper' },
@@ -330,11 +330,11 @@ export const NO_MARKET_NEWS =
     '<p class="mobile-text" style="margin:0 0 20px 0;font-size:16px;line-height:1.6;color:#4b5563;">No market news available today. Please check back tomorrow.</p>';
 
 export const WATCHLIST_TABLE_HEADER = [
-    'Company',
-    'Symbol',
-    'Price',
-    'Change',
-    'Market Cap',
-    'P/E Ratio',
-    'Action',
-];
+    'company',
+    'symbol',
+    'price',
+    'change',
+    'marketCap',
+    'peRatio',
+    'action',
+] as const;

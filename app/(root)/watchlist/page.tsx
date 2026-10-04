@@ -1,42 +1,12 @@
-import { Star } from "lucide-react";
-import { searchStocks } from "@/lib/actions/finnhub.actions";
-import SearchCommand from "@/components/SearchCommand";
-import { WatchlistTable } from "@/components/WatchlistTable";
-import { getWatchlistWithData } from "@/lib/actions/getWatchlistWithData";
-export const dynamic = "force-dynamic";
+import StockList from "@/components/StockList";
+import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
+import { getServerLocale } from "@/lib/i18n-server";
+import { getDictionary } from "@/lib/i18n";
 
-const Watchlist = async () => {
-  const watchlist = await getWatchlistWithData();
-  const initialStocks = await searchStocks();
-
-  // Empty state
-  if (watchlist.length === 0) {
-    return (
-      <section className="flex watchlist-empty-container mx-auto">
-        <div className="watchlist-empty">
-          <Star className="watchlist-star" />
-          <h2 className="empty-title">Your watchlist is empty</h2>
-          <p className="empty-description">
-            Start building your watchlist by searching for stocks and clicking
-            the star icon to add them.
-          </p>
-        </div>
-        <SearchCommand initialStocks={initialStocks} />
-      </section>
-    );
-  }
-
-  return (
-    <section className="watchlist mx-auto">
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <h2 className="watchlist-title">Watchlist</h2>
-          <SearchCommand initialStocks={initialStocks} />
-        </div>
-        <WatchlistTable watchlist={watchlist} />
-      </div>
-    </section>
-  );
-};
-
-export default Watchlist;
+export default async function WatchlistPage() {
+  const [items, locale] = await Promise.all([getUserWatchlist(), getServerLocale()]);
+  const dictionary = getDictionary(locale);
+  return <div className="daily-page"><div className="page-heading"><div><p className="section-meta skeleton-text">{dictionary.daily.usMarket}</p><h1 className="skeleton-text">{dictionary.watchlist.title}</h1></div></div>
+    <StockList stocks={items.map((stock: { symbol: string; company: string }) => ({ symbol: stock.symbol, company: stock.company, followed: true }))} />
+  </div>;
+}

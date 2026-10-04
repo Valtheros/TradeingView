@@ -9,7 +9,11 @@ const useTradingViewWidget = (
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
-    if (container.dataset.loaded) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "tradingview-widget-container";
+    wrapper.style.height = `${height}px`;
+    wrapper.style.width = "100%";
 
     const widgetContainer = document.createElement("div");
     widgetContainer.className = "tradingview-widget-container__widget";
@@ -21,11 +25,15 @@ const useTradingViewWidget = (
     script.async = true;
     script.innerHTML = JSON.stringify(config);
 
-    container.replaceChildren(widgetContainer, script);
-    container.dataset.loaded = "true";
+    // Defer injection past Strict Mode's setup/cleanup cycle. Keep a parent for
+    // an in-flight embed script even if the user navigates away before it loads.
+    const timer = setTimeout(() => {
+      wrapper.append(widgetContainer, script);
+      container.replaceChildren(wrapper);
+    }, 0);
     return () => {
-      container.replaceChildren();
-      delete container.dataset.loaded;
+      clearTimeout(timer);
+      wrapper.remove();
     };
   }, [scriptUrl, config, height]);
   return containerRef;

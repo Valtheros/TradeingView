@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from "better-auth/cookies";
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
 const sessionCookie = getSessionCookie(request);
 
  // Check cookie presence - prevents obviously unauthorized users
@@ -14,6 +14,6 @@ const sessionCookie = getSessionCookie(request);
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|sign-in|sign-up|assets|verify-email).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|sign-in|sign-up|assets|verify-email).*)',
   ],
 };

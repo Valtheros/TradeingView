@@ -19,6 +19,7 @@ import { Controller } from "react-hook-form";
 import { Button } from "../ui/button";
 import { Check, ChevronsUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useLanguage } from "../LanguageProvider";
 
 const CountrySelect = ({
   value,
@@ -28,6 +29,8 @@ const CountrySelect = ({
   onChange: (value: string) => void;
 }) => {
   const [open, setOpen] = useState(false);
+  const { dictionary } = useLanguage();
+  const copy = dictionary.countrySelect;
   const countries = countryList().getData();
 
   return (
@@ -44,7 +47,7 @@ const CountrySelect = ({
               <span>{countries.find((c) => c.value === value)?.label}</span>
             </span>
           ) : (
-            "Select your country..."
+            copy.select
           )}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
@@ -55,11 +58,11 @@ const CountrySelect = ({
       >
         <Command className="bg-gray-800 border-gray-600">
           <CommandInput
-            placeholder="Search countries..."
+            placeholder={copy.search}
             className="country-select-input"
           />
           <CommandEmpty className="country-select-empty">
-            No country found.
+            {copy.empty}
           </CommandEmpty>
           <CommandList className="max-h-60 bg-gray-800 scrollbar-hide-default">
             <CommandGroup className="bg-gray-800">
@@ -99,6 +102,7 @@ const ContrySelectfield = ({
   error,
   required = false,
 }: CountrySelectProps) => {
+  const { dictionary } = useLanguage();
   return (
     <div className="space-y-2">
       <Label htmlFor={name} className="form-label">
@@ -108,7 +112,12 @@ const ContrySelectfield = ({
         name={name}
         control={control}
         rules={{
-          required: required ? `Please select ${label.toLowerCase()}` : false,
+          required: required
+            ? dictionary.selectField.required.replace(
+                "{label}",
+                label.toLowerCase()
+              )
+            : false,
         }}
         render={({ field }) => (
           <CountrySelect value={field.value} onChange={field.onChange} />
@@ -116,7 +125,7 @@ const ContrySelectfield = ({
       />
       {error && <p className="text-sm text-red-500">{error.message}</p>}
       <p className="text-xs text-gray-500">
-        Helps us show market data and news relevant to you.
+        {dictionary.countrySelect.help}
       </p>
     </div>
   );

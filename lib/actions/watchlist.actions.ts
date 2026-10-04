@@ -36,12 +36,10 @@ export async function getWatchlistSymbolsByEmail(
 }
 
 export const addWatchlistItem = async (symbol: string, company: string) => {
+  const auth = await getAuth();
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) redirect("/sign-in");
   try {
-    const auth = await getAuth();
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) redirect("/sign-in");
 
     // Check if the item already exists
     const existingItem = await Watchlist.findOne({
@@ -60,6 +58,7 @@ export const addWatchlistItem = async (symbol: string, company: string) => {
 
     await newItem.save();
     revalidatePath("/watchlist");
+    revalidatePath("/");
 
     return { success: true, message: "Stock added to watchlist" };
   } catch (error) {
@@ -69,12 +68,10 @@ export const addWatchlistItem = async (symbol: string, company: string) => {
 };
 
 export const removeFromWatchlist = async (symbol: string) => {
+  const auth = await getAuth();
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) redirect("/sign-in");
   try {
-    const auth = await getAuth();
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) redirect('/sign-in');
 
     // Remove from watchlist
     await Watchlist.deleteOne({
@@ -82,6 +79,7 @@ export const removeFromWatchlist = async (symbol: string) => {
       symbol: symbol.toUpperCase(),
     });
     revalidatePath('/watchlist');
+    revalidatePath('/');
 
     return { success: true, message: 'Stock removed from watchlist' };
   } catch (error) {
@@ -92,12 +90,10 @@ export const removeFromWatchlist = async (symbol: string) => {
 
 // Get user's watchlist
 export const getUserWatchlist = async () => {
+  const auth = await getAuth();
+  const session = await auth.api.getSession({ headers: await headers() });
+  if (!session?.user) redirect("/sign-in");
   try {
-    const auth = await getAuth();
-    const session = await auth.api.getSession({
-      headers: await headers(),
-    });
-    if (!session?.user) redirect('/sign-in');
 
     const watchlist = await Watchlist.find({ userId: session.user.id })
       .sort({ addedAt: -1 })

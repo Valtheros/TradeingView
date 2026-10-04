@@ -26,6 +26,7 @@ const TradingViewWidget = ({
       <div
         className={cn("tradingview-widget-container", classname)}
         ref={containerRef}
+        style={{ height, width: "100%" }}
       >
         <div
           className="tradingview-widget-container__widget"

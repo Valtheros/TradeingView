@@ -3,10 +3,11 @@ import { saveUserNewsSummary } from "../actions/saveusernews.action";
 import { getAllUserForNews } from "../actions/user.action";
 import { getWatchlistSymbolsByEmail } from "../actions/watchlist.actions";
 import { sendWelcomeEmail } from "../nodemailer";
-import { getFormattedTodayDate, getTodayString } from "../utils";
+import { getFormattedTodayDateForLocale, getTodayString } from "../utils";
+import { isLocale } from "../i18n";
 import { inngest } from "./client";
 import {
-  NEWS_SUMMARY_PROMPT,
+  buildNewsSummaryPrompt,
   PERSONALIZED_WELCOME_EMAIL_PROMPT,
 } from "./prompts";
 
@@ -109,47 +110,71 @@ export const DailyNewsSummary = inngest.createFunction(
     });
 
     // Step #3: (placeholder) Summarize news via AI
+    const requestedLocales = Array.isArray(event.data.locales)
+      ? event.data.locales.filter(isLocale)
+      : [];
+    const summaryLocales =
+      requestedLocales.length > 0 ? requestedLocales : (["en", "th"] as const);
     const userNewsSummaries: {
       user: UserForNews;
+      locale: (typeof summaryLocales)[number];
+      readableDate: string;
       newsContent: string | null;
     }[] = [];
-    const readableDate = getFormattedTodayDate();
     const dateISO = getTodayString();
 
     for (const { user, articles } of results) {
-      try {
-        const prompt = NEWS_SUMMARY_PROMPT.replace(
-          "{{newsData}}",
-          JSON.stringify(articles, null, 2)
-        );
+      for (const locale of summaryLocales) {
+        try {
+          const prompt = buildNewsSummaryPrompt(locale, articles);
 
-        const response = await step.ai.infer(`summarize-news-${user.email}`, {
-          model: step.ai.models.gemini({ model: "gemini-2.5-flash" }),
-          body: {
-            contents: [{ role: "user", parts: [{ text: prompt }] }],
-          },
-        });
+          const response = await step.ai.infer(
+            `summarize-news-${locale}-${user.email}`,
+            {
+              model: step.ai.models.gemini({ model: "gemini-2.5-flash" }),
+              body: {
+                contents: [{ role: "user", parts: [{ text: prompt }] }],
+              },
+            }
+          );
 
-        const part = response.candidates?.[0]?.content?.parts?.[0];
-        const newsContent =
-          (part && "text" in part ? part.text : null) || "No market news.";
+          const part = response.candidates?.[0]?.content?.parts?.[0];
+          const newsContent =
+            (part && "text" in part ? part.text : null) ||
+            (locale === "th" ? "ไม่มีข่าวตลาด" : "No market news.");
 
-        userNewsSummaries.push({ user, newsContent });
-      } catch (e) {
-        console.error("Failed to summarize news for : ", user.email, e);
-        userNewsSummaries.push({ user, newsContent: null });
+          userNewsSummaries.push({
+            user,
+            locale,
+            readableDate: getFormattedTodayDateForLocale(locale),
+            newsContent,
+          });
+        } catch (e) {
+          console.error(
+            `Failed to summarize ${locale} news for : `,
+            user.email,
+            e
+          );
+          userNewsSummaries.push({
+            user,
+            locale,
+            readableDate: getFormattedTodayDateForLocale(locale),
+            newsContent: null,
+          });
+        }
       }
     }
     // Step #4: Persist summaries for in-app viewing
     await step.run("save-news-summaries", async () => {
       await Promise.all(
-        userNewsSummaries.map(async ({ user, newsContent }) => {
+        userNewsSummaries.map(async ({ user, locale, readableDate, newsContent }) => {
           if (!newsContent) return false;
 
           return await saveUserNewsSummary({
             userId: user.id,
             email: user.email,
             name: user.name,
+            locale,
             readableDate,
             dateISO,
             newsContent,

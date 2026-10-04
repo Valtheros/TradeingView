@@ -5,8 +5,11 @@ import {
   removeFromWatchlist,
 } from '@/lib/actions/watchlist.actions';
 import { Star, Trash2 } from 'lucide-react';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
+import { interpolate } from '@/lib/i18n';
+import { useLanguage } from './LanguageProvider';
+import { useRouter } from 'next/navigation';
 
 const WatchlistButton = ({
   symbol,
@@ -16,17 +19,22 @@ const WatchlistButton = ({
   type = 'button',
   onWatchlistChange,
 }: WatchlistButtonProps) => {
+  const { dictionary } = useLanguage();
+  const router = useRouter();
+  const copy = dictionary.watchlist;
   const [added, setAdded] = useState<boolean>(!!isInWatchlist);
   const [pending, setPending] = useState(false);
 
-  useEffect(() => {
+  const [previousFollowed, setPreviousFollowed] = useState(isInWatchlist);
+  if (previousFollowed !== isInWatchlist) {
+    setPreviousFollowed(isInWatchlist);
     setAdded(!!isInWatchlist);
-  }, [isInWatchlist]);
+  }
 
   const label = useMemo(() => {
     if (type === 'icon') return added ? '' : '';
-    return added ? 'Remove from Watchlist' : 'Add to Watchlist';
-  }, [added, type]);
+    return added ? copy.remove : copy.add;
+  }, [added, copy.add, copy.remove, type]);
 
   const toggleWatchlist = async (nextAdded: boolean) => {
     const result = nextAdded
@@ -34,17 +42,19 @@ const WatchlistButton = ({
       : await removeFromWatchlist(symbol);
 
     if (result.success) {
-      toast.success(nextAdded ? 'Added to Watchlist' : 'Removed from Watchlist', {
-        description: `${company} ${
-          nextAdded ? 'added to' : 'removed from'
-        } your watchlist`,
+      toast.success(nextAdded ? copy.added : copy.removed, {
+        description: interpolate(
+          nextAdded ? copy.addedDescription : copy.removedDescription,
+          { company }
+        ),
       });
 
       onWatchlistChange?.(symbol, nextAdded);
+      router.refresh();
       return true;
     }
 
-    toast.error(result.message || 'Unable to update watchlist');
+    toast.error(result.message || copy.updateFailed);
     return false;
   };
 
@@ -63,9 +73,9 @@ const WatchlistButton = ({
       if (!success) setAdded(previous);
     } catch (error) {
       setAdded(previous);
-      toast.error('Unable to update watchlist', {
+      toast.error(copy.updateFailed, {
         description:
-          error instanceof Error ? error.message : 'Please try again.',
+          error instanceof Error ? error.message : copy.tryAgain,
       });
     } finally {
       setPending(false);
@@ -77,19 +87,19 @@ const WatchlistButton = ({
       <button
         title={
           added
-            ? `Remove ${symbol} from watchlist`
-            : `Add ${symbol} to watchlist`
+            ? interpolate(copy.removeSymbol, { symbol })
+            : interpolate(copy.addSymbol, { symbol })
         }
         aria-label={
           added
-            ? `Remove ${symbol} from watchlist`
-            : `Add ${symbol} to watchlist`
+            ? interpolate(copy.removeSymbol, { symbol })
+            : interpolate(copy.addSymbol, { symbol })
         }
         className={`watchlist-icon-btn ${added ? 'watchlist-icon-added' : ''}`}
         disabled={pending}
         onClick={handleClick}
       >
-        <Star fill={added ? 'currentColor' : 'none'} />
+        {showTrashIcon && added ? <Trash2 size={18} /> : <Star size={18} fill={added ? 'currentColor' : 'none'} />}
       </button>
     );
   }

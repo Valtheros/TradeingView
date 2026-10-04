@@ -3,6 +3,7 @@
 import { connecttoDatabase } from "@/database/mongoose";
 import { inngest } from "../inngest/client";
 import { ObjectId } from "mongodb";
+import type { Locale } from "../i18n";
 
 export const getAllUserForNews = async (userId?: string) => {
   try {
@@ -51,11 +52,11 @@ export const getAllUserForNews = async (userId?: string) => {
   }
 };
 
-export const Fetchnews = async (userId?: string) => {
+export const Fetchnews = async (userId?: string, locales?: Locale[]) => {
   try {
     await inngest.send({
       name: "app/news.daily.fetched",
-      data: { userId },
+      data: { userId, locales },
     });
   } catch (error) {
     console.log("Fetchnews failed", error);

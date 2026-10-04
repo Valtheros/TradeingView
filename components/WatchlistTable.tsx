@@ -12,16 +12,21 @@ import { WATCHLIST_TABLE_HEADER } from "@/lib/constants";
 import  WatchlistButton  from "./WatchlistButton";
 import { useRouter } from "next/navigation";
 import { cn, getChangeColorClass } from "@/lib/utils";
+import { useLanguage } from "./LanguageProvider";
 
 export function WatchlistTable({ watchlist }: WatchlistTableProps) {
   const router = useRouter();
+  const { dictionary } = useLanguage();
+  const headers = WATCHLIST_TABLE_HEADER.map(
+    (key) => dictionary.watchlist.table[key]
+  );
 
   return (
     <>
       <Table className="scrollbar-hide-default watchlist-table">
         <TableHeader>
           <TableRow className="table-header-row">
-            {WATCHLIST_TABLE_HEADER.map((label) => (
+            {headers.map((label) => (
               <TableHead className="table-header" key={label}>
                 {label}
               </TableHead>

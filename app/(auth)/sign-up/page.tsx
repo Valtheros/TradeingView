@@ -14,9 +14,24 @@ import {
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const Signup = () => {
+  const { dictionary } = useLanguage();
+  const copy = dictionary.signUp;
   const router = useRouter();
+  const investmentGoalOptions = INVESTMENT_GOALS.map((option) => ({
+    ...option,
+    label: dictionary.options.investmentGoals[option.value],
+  }));
+  const riskToleranceOptions = RISK_TOLERANCE_OPTIONS.map((option) => ({
+    ...option,
+    label: dictionary.options.riskTolerance[option.value],
+  }));
+  const preferredIndustryOptions = PREFERRED_INDUSTRIES.map((option) => ({
+    ...option,
+    label: dictionary.options.preferredIndustries[option.value],
+  }));
   const {
     register,
     handleSubmit,
@@ -43,73 +58,75 @@ const Signup = () => {
         }
         // localStorage.setItem("userEmail", data.email); // Removed: Security vulnerability
         // OTP is sent automatically or handled by server
-        toast.success("Account created! Please verify your email.");
+        toast.success(copy.success);
         router.push("/verify-email");
       } else {
-        toast.error("Sign up failed. Please try again.");
+        toast.error(copy.failedRetry);
       }
     } catch (error) {
       console.error(error);
-      toast.error("Sign up failed", {
+      toast.error(copy.failed, {
         description:
           error instanceof Error
             ? error.message
-            : "Failed to create an account.",
+            : copy.failedDescription,
       });
     }
   };
 
   return (
     <>
-      <h1 className="form-title">Sign Up & Personalize</h1>
+      <h1 className="form-title">{copy.title}</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Inputfield
           name="fullName"
-          label="Full Name"
-          placeholder="John Doe"
+          label={copy.fullNameLabel}
+          placeholder={copy.fullNamePlaceholder}
           register={register}
           error={errors.fullName}
           validation={{
-            required: "Full name is required",
+            required: copy.fullNameRequired,
             minLength: {
               value: 2,
-              message: "Full name must be at least 2 characters",
+              message: copy.fullNameMin,
             },
           }}
         />
 
         <Inputfield
           name="email"
-          label="Email"
-          placeholder="valthers@gmail.com"
+          label={copy.emailLabel}
+          placeholder={copy.emailPlaceholder}
           register={register}
           error={errors.email}
           validation={{
-            required: "Email is required",
-            pattern: /^\w+@\w+\.\w+$/,
-            message: "Please enter a valid email address",
+            required: copy.emailRequired,
+            pattern: {
+              value: /^\w+@\w+\.\w+$/,
+              message: copy.emailInvalid,
+            },
           }}
         />
 
         <Inputfield
           name="password"
-          label="Password"
-          placeholder="Enter your password"
+          label={copy.passwordLabel}
+          placeholder={copy.passwordPlaceholder}
           type="password"
           register={register}
           error={errors.password}
           validation={{
-            required: "Password is required",
+            required: copy.passwordRequired,
             minLength: {
               value: 8,
-              message: "Password must be at least 8 characters",
+              message: copy.passwordMin,
             },
           }}
         />
 
         <ContrySelectfield
           name="country"
-          label="Country"
+          label={copy.countryLabel}
           control={control}
           error={errors.country}
           required
@@ -117,27 +134,27 @@ const Signup = () => {
 
         <Selectfield
           name="investmentGoals"
-          label="Investment Goals"
-          placeholder="Select your investment goals"
-          options={INVESTMENT_GOALS}
+          label={copy.investmentGoalsLabel}
+          placeholder={copy.investmentGoalsPlaceholder}
+          options={investmentGoalOptions}
           control={control}
           error={errors.investmentGoals}
           required
         />
         <Selectfield
           name="riskTolerance"
-          label="Risk Tolerance"
-          placeholder="Select your Risk level"
-          options={RISK_TOLERANCE_OPTIONS}
+          label={copy.riskToleranceLabel}
+          placeholder={copy.riskTolerancePlaceholder}
+          options={riskToleranceOptions}
           control={control}
           error={errors.riskTolerance}
           required
         />
         <Selectfield
           name="preferredIndustry"
-          label="Preferred Industry"
-          placeholder="Select your preferred industry"
-          options={PREFERRED_INDUSTRIES}
+          label={copy.preferredIndustryLabel}
+          placeholder={copy.preferredIndustryPlaceholder}
+          options={preferredIndustryOptions}
           control={control}
           error={errors.preferredIndustry}
           required
@@ -148,12 +165,12 @@ const Signup = () => {
           disabled={isSubmitting}
           className="yellow-btn w-full mt-5"
         >
-          {isSubmitting ? "Creating Account..." : "Start Investing"}
+          {isSubmitting ? copy.submitting : copy.submit}
         </Button>
 
         <FooterLink
-          text="Already have an account?"
-          linkText="Sign In"
+          text={copy.hasAccount}
+          linkText={copy.signIn}
           href="/sign-in"
         />
       </form>

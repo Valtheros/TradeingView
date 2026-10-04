@@ -6,8 +6,11 @@ import { signInWithEmail } from "@/lib/actions/auth.actions";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import { useLanguage } from "@/components/LanguageProvider";
 
 const Signin = () => {
+  const { dictionary } = useLanguage();
+  const copy = dictionary.signIn;
   const router = useRouter();
   const {
     register,
@@ -30,39 +33,41 @@ const Signin = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error("Sign In failed", {
+      toast.error(copy.failed, {
         description:
-          error instanceof Error ? error.message : "Failed to Sign In.",
+          error instanceof Error ? error.message : copy.failedDescription,
       });
     }
   };
   return (
     <>
-      <h1 className="form-title">Sign In</h1>
+      <h1 className="form-title">{copy.title}</h1>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <Inputfield
           name="email"
-          label="Email"
-          placeholder="valthers@gmail.com"
+          label={copy.emailLabel}
+          placeholder={copy.emailPlaceholder}
           register={register}
           error={errors.email}
           validation={{
-            required: "Email is required",
-            pattern: /^\w+@\w+\.\w+$/,
-            message: "Please enter a valid email address",
+            required: copy.emailRequired,
+            pattern: {
+              value: /^\w+@\w+\.\w+$/,
+              message: copy.emailInvalid,
+            },
           }}
         />
 
         <Inputfield
           name="password"
-          label="Password"
-          placeholder="Enter your password"
+          label={copy.passwordLabel}
+          placeholder={copy.passwordPlaceholder}
           type="password"
           register={register}
           error={errors.password}
           validation={{
-            required: "Password is required",
-            minLength: {value: 8, message: "Password must be at least 8 characters"},
+            required: copy.passwordRequired,
+            minLength: {value: 8, message: copy.passwordMin},
           }}
         />
 
@@ -71,12 +76,12 @@ const Signin = () => {
           disabled={isSubmitting}
           className="yellow-btn w-full mt-5"
         >
-          {isSubmitting ? "Signing In..." : "Sign In"}
+          {isSubmitting ? copy.submitting : copy.submit}
         </Button>
 
         <FooterLink
-          text="Don't have an account?"
-          linkText="Create an account"
+          text={copy.noAccount}
+          linkText={copy.createAccount}
           href="/sign-up"
         />
       </form>

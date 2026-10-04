@@ -25,6 +25,18 @@ type FinnhubCompanyProfile = {
   exchange?: string;
 };
 
+export const getStockProfile = cache(async (symbol: string): Promise<FinnhubCompanyProfile | null> => {
+  const token = getFinnhubApiKey();
+  if (!token) return null;
+  try {
+    const response = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(symbol)}`, {
+      headers: { "X-Finnhub-Token": token }, next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch { return null; }
+});
+
 type SearchResultWithMetadata = FinnhubSearchResult & {
   exchange?: string;
   tradingViewSymbol?: string;

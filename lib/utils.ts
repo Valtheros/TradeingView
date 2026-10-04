@@ -137,3 +137,12 @@ export const getFormattedTodayDate = () => new Date().toLocaleDateString('en-US'
   day: 'numeric',
   timeZone: 'UTC',
 });
+
+export const getFormattedTodayDateForLocale = (locale: 'en' | 'th') =>
+  new Date().toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    timeZone: 'UTC',
+  });

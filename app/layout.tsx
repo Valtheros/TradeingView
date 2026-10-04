@@ -1,7 +1,16 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import "@fontsource/ibm-plex-sans-thai/400.css";
+import "@fontsource/ibm-plex-sans-thai/500.css";
+import "@fontsource/ibm-plex-sans-thai/600.css";
+import "@fontsource/ibm-plex-sans-thai/700.css";
 import "./globals.css";
-import { Toaster } from "@/components/ui/sonner"
+import "./daily.css";
+import { LanguageProvider } from "@/components/LanguageProvider";
+import { Toaster } from "@/components/ui/sonner";
+import { getServerLocale } from "@/lib/i18n-server";
+import { SearchProvider } from "@/components/SearchCommand";
+import { PwaProvider } from "@/components/PwaProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -14,22 +23,35 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Stockmarkets",
-  description: "For investing, by investors.",
+  title: { default: "StockMarket | Today", template: "%s | StockMarket" },
+  description: "Your daily stocks, watchlist and market digest.",
+  applicationName: "StockMarket",
+  appleWebApp: { capable: true, title: "StockMarket", statusBarStyle: "black-translucent" },
+  icons: { apple: "/assets/icons/apple-touch-icon.png", icon: "/assets/icons/app-192.png" },
 };
+
+export const viewport: Viewport = { width: "device-width", initialScale: 1, viewportFit: "cover", themeColor: "#101112" };
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  return <RootLayoutContent>{children}</RootLayoutContent>;
+}
+
+async function RootLayoutContent({ children }: { children: React.ReactNode }) {
+  const locale = await getServerLocale();
+
   return (
-    <html lang="en" className="dark">
+    <html lang={locale} data-locale={locale} className="dark">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        {children}
-        <Toaster />
+        <LanguageProvider initialLocale={locale}>
+          <PwaProvider><SearchProvider>{children}</SearchProvider></PwaProvider>
+          <Toaster />
+        </LanguageProvider>
       </body>
     </html>
   );

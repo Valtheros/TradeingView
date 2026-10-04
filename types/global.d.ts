@@ -229,6 +229,7 @@ declare global {
     userId: string;
     email: string;
     name?: string;
+    locale?: "en" | "th";
     readableDate: string;
     dateISO: string;
     newsContent: string;
@@ -240,6 +241,7 @@ declare global {
     userId: string;
     email: string;
     name?: string;
+    locale?: "en" | "th";
     readableDate: string;
     dateISO: string;
     newsContent: string;
