@@ -29,7 +29,7 @@ StockMarket is a mobile-first daily companion for US stocks. Check your watchlis
 - Finnhub API for stock search, quotes, profiles, metrics, and news
 - TradingView embedded widgets for charts and market data
 - Inngest for background jobs and scheduled news summaries
-- Gemini for AI-generated welcome emails and news summaries
+- Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) for AI-generated welcome emails and news summaries
 - Nodemailer for OTP and welcome emails
 
 ## Main Pages
