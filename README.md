@@ -9,7 +9,7 @@ StockMarket is a mobile-first daily companion for US stocks. Check your watchlis
 - Opens on **Today**: followed stocks (or popular stocks for a new account), latest daily digest, and a market chart/heatmap.
 - Refreshes visible stock prices every 60 seconds while the app is online and visible, with manual refresh and explicit unavailable/stale states. Quotes come from Finnhub and are not guaranteed real-time.
 - Uses a mobile bottom navigation and compact stock rows, with a wider desktop layout and 20-stock watchlist pages.
-- Lets signed-in users search stocks through Finnhub and validates symbols against TradingView before showing them.
+- Searches US stocks through Finnhub without waiting for quote/profile checks on every result. TradingView symbols are resolved when opening a stock's detail page.
 - Provides stock detail pages with a candle/line chart switch and company, financial, and technical widgets loaded on demand.
 - Saves a per-user watchlist in MongoDB and displays USD quotes, daily changes, and provider timestamps. Detailed financials remain available on the stock page.
 - Generates personalized daily market news summaries from each user's watchlist using Inngest and Gemini.
@@ -163,7 +163,7 @@ npx tsc --noEmit
 ## Data Flow
 
 1. A user signs up, verifies their email with OTP, and stores investing preferences.
-2. The user searches for stocks. Results come from Finnhub and are checked against TradingView symbol resolution before display.
+2. The user searches for stocks. US results come directly from Finnhub; search and watchlist status load in parallel. TradingView symbol resolution happens on the stock detail page instead.
 3. The user adds symbols to a MongoDB-backed watchlist.
 4. The visible stock rows fetch quotes through the authenticated batch API. Company information and financial widgets load separately on stock detail pages.
 5. Inngest runs the daily news summary job, fetches news for each user's watchlist symbols, asks Gemini to summarize it, and saves the sanitized result for `/news`.

@@ -30,7 +30,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
       } finally {
         if (!cancelled) setLoading(false);
       }
-    }, term.trim() ? 350 : 0);
+    }, term.trim() ? 150 : 0);
     return () => { cancelled = true; clearTimeout(timer); };
   }, [open, term]);
 
@@ -53,7 +53,7 @@ export function SearchProvider({ children }: { children: ReactNode }) {
         <DialogTitle>{dictionary.nav.search}</DialogTitle>
         <DialogDescription className="sr-only">{copy.placeholder}</DialogDescription>
         <label className="stock-search-field"><Search size={20} />
-          <input autoComplete="off" autoCapitalize="characters" spellCheck={false} value={term} onChange={(e) => { setLoading(true); setTerm(e.target.value); }} placeholder={copy.placeholder} aria-label={copy.placeholder} />
+          <input autoComplete="off" autoCapitalize="characters" spellCheck={false} maxLength={80} value={term} onChange={(e) => { setLoading(true); setTerm(e.target.value); }} placeholder={copy.placeholder} aria-label={copy.placeholder} />
         </label>
         <div className="stock-search-results" aria-busy={loading}>
           <p className="section-meta">{term.trim() ? copy.results : copy.popular}</p>
