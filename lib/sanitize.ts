@@ -2,6 +2,14 @@ import sanitizeHtml from "sanitize-html";
 
 const styleValue = /^(?:[-#(),.%\w\s]+)$/;
 
+export function summaryPreview(html: string, locale: string) {
+  const text = sanitizeHtml(html, {
+    allowedTags: [], allowedAttributes: {}, textFilter: (value) => `${value} `,
+  }).replace(/\s+/g, " ").trim();
+  const segments = Array.from(new Intl.Segmenter(locale, { granularity: "grapheme" }).segment(text));
+  return segments.slice(0, 600).map((part) => part.segment).join("") + (segments.length > 600 ? "..." : "");
+}
+
 export const sanitizeSummaryHtml = (html: string) =>
   sanitizeHtml(html, {
     allowedTags: [

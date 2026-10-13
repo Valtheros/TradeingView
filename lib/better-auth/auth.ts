@@ -11,15 +11,18 @@ const createAuthInstance = async () => {
   const db = mongoose.connection.db;
 
   if (!db) throw new Error("Mongodb connection not found");
+  const previewOrigin = process.env.VERCEL_ENV === "preview" && process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}` : undefined;
 
   return betterAuth({
     database: mongodbAdapter(db as Db),
 
     secret: process.env.BETTER_AUTH_SECRET,
-    baseURL: process.env.BETTER_AUTH_URL,
-    trustedOrigins: process.env.TRUSTED_ORIGINS
-      ? process.env.TRUSTED_ORIGINS.split(",")
-      : [],
+    baseURL: previewOrigin || process.env.BETTER_AUTH_URL,
+    trustedOrigins: [
+      ...(process.env.TRUSTED_ORIGINS?.split(",").map(origin => origin.trim()).filter(Boolean) || []),
+      ...(previewOrigin ? [previewOrigin] : []),
+    ],
     emailAndPassword: {
       enabled: true,
       disableSignUp: false,
@@ -53,11 +56,14 @@ const createAuthInstance = async () => {
 
 type AuthInstance = Awaited<ReturnType<typeof createAuthInstance>>;
 
-let authInstance: AuthInstance | null = null;
+let authInstance: Promise<AuthInstance> | null = null;
 
 export const getAuth = async (): Promise<AuthInstance> => {
   if (!authInstance) {
-    authInstance = await createAuthInstance();
+    authInstance = createAuthInstance().catch((error) => {
+      authInstance = null;
+      throw error;
+    });
   }
   return authInstance;
 };

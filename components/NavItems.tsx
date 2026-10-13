@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useLanguage } from "./LanguageProvider";
 import SearchCommand from "./SearchCommand";
+import { LinkFeedback } from "./StockLink";
 
 export default function NavItems({ mobile = false }: { mobile?: boolean }) {
   const pathname = usePathname();
@@ -15,7 +16,7 @@ export default function NavItems({ mobile = false }: { mobile?: boolean }) {
     { href: "/news", label: dictionary.nav.news, Icon: Newspaper },
   ];
   return <nav className={mobile ? "mobile-nav" : "desktop-nav"} aria-label={mobile ? "Mobile" : "Main"}>
-    {items.map(({ href, label, Icon }) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}><Icon size={20} /><span>{label}</span></Link>)}
+    {items.map(({ href, label, Icon }) => <Link key={href} href={href} aria-current={pathname === href ? "page" : undefined}><Icon size={20} /><span>{label}</span><LinkFeedback /></Link>)}
     <SearchCommand renderAs="text" label={dictionary.nav.search} />
   </nav>;
 }

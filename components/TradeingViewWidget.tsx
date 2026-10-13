@@ -2,6 +2,8 @@
 import useTradingViewWidget from "@/hooks/useTradingViewWidget";
 import { cn } from "@/lib/utils";
 import React, { memo } from "react";
+import { useLanguage } from "./LanguageProvider";
+import { RefreshCw } from "lucide-react";
 
 interface TradingViewWidgetProps {
   title?: string;
@@ -18,10 +20,11 @@ const TradingViewWidget = ({
   height = 600,
   classname,
 }: TradingViewWidgetProps) => {
-  const containerRef = useTradingViewWidget(scriptUrl, config, height);
+  const { containerRef, failed, retry } = useTradingViewWidget(scriptUrl, config, height);
+  const { dictionary } = useLanguage();
 
   return (
-    <div className="w-full">
+    <div className="w-full widget-frame">
         {title && <h3 className="font-semibold text-2xl text-gray-100 mb-5">{title}</h3> }
       <div
         className={cn("tradingview-widget-container", classname)}
@@ -33,6 +36,7 @@ const TradingViewWidget = ({
           style={{ height, width: "100%" }}
         />
       </div>
+      {failed && <div className="widget-error" role="status"><p>{dictionary.daily.marketUnavailable}</p><button className="action-button secondary" onClick={retry}><RefreshCw size={18} />{dictionary.daily.retry}</button></div>}
     </div>
   );
 };

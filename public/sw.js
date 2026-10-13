@@ -1,5 +1,5 @@
-const CACHE = "stockmarket-shell-v1";
-const ASSETS = ["/offline.html", "/assets/icons/app-192.png", "/assets/icons/app-512.png", "/assets/icons/app-maskable.png", "/assets/icons/apple-touch-icon.png"];
+const CACHE = "stockmarket-shell-v2";
+const ASSETS = ["/offline.html", "/assets/icons/app-192.png", "/assets/icons/app-512.png", "/assets/icons/app-maskable.png", "/assets/icons/apple-touch-icon.png", "/assets/icons/startup-iphone17-portrait.png", "/assets/icons/startup-iphone17-landscape.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));

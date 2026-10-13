@@ -10,8 +10,7 @@ import {
 } from "@/lib/utils";
 import { POPULAR_STOCK_SYMBOLS } from "@/lib/constants";
 import { cache } from "react";
-import { getAuth } from "../better-auth/auth";
-import { headers } from "next/headers";
+import { getCurrentSession } from "../better-auth/session";
 import { redirect } from "next/navigation";
 import { Watchlist } from "@/database/models/watchlist.model";
 import { getFinnhubApiKey } from "../finnhub/env";
@@ -23,6 +22,7 @@ type FinnhubCompanyProfile = {
   name?: string;
   ticker?: string;
   exchange?: string;
+  logo?: string;
 };
 
 export const getStockProfile = cache(async (symbol: string): Promise<FinnhubCompanyProfile | null> => {
@@ -46,7 +46,7 @@ async function fetchJSON<T>(
       ? { cache: "force-cache", next: { revalidate: revalidateSeconds } }
       : { cache: "no-store" };
 
-  const res = await fetch(url, options);
+  const res = await fetch(url, { ...options, signal: AbortSignal.timeout(8000) });
   if (!res.ok) {
     const text = await res.text().catch(() => "");
     throw new Error(`Fetch failed ${res.status}: ${text}`);
@@ -140,8 +140,7 @@ export async function getNews(
 
 export const searchStocks = cache(
   async (query?: string): Promise<StockWithWatchlistStatus[]> => {
-    const auth = await getAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getCurrentSession();
     if (!session?.user) redirect("/sign-in");
     if (query !== undefined && typeof query !== "string") return [];
     const trimmed = query?.trim() || "";
@@ -176,7 +175,7 @@ export const searchStocks = cache(
       }));
     } catch (err) {
       console.error("Error in stock search:", err);
-      return [];
+      throw new Error("Stock search unavailable");
     }
   }
 );

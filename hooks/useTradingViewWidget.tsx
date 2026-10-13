@@ -1,11 +1,13 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 const useTradingViewWidget = (
   scriptUrl: string,
   config: Record<string, unknown>,
   height = 600
 ) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
@@ -24,6 +26,10 @@ const useTradingViewWidget = (
     script.src = scriptUrl;
     script.async = true;
     script.innerHTML = JSON.stringify(config);
+    let disposed = false;
+    const deadline = setTimeout(() => { if (!disposed) setFailed(true); }, 8000);
+    script.onload = () => { clearTimeout(deadline); if (!disposed) setFailed(false); };
+    script.onerror = () => { clearTimeout(deadline); if (!disposed) setFailed(true); };
 
     // Defer injection past Strict Mode's setup/cleanup cycle. Keep a parent for
     // an in-flight embed script even if the user navigates away before it loads.
@@ -33,10 +39,12 @@ const useTradingViewWidget = (
     }, 0);
     return () => {
       clearTimeout(timer);
+      disposed = true;
+      clearTimeout(deadline);
       wrapper.remove();
     };
-  }, [scriptUrl, config, height]);
-  return containerRef;
+  }, [scriptUrl, config, height, attempt]);
+  return { containerRef, failed, retry: () => { setFailed(false); setAttempt((value) => value + 1); } };
 };
 
 export default useTradingViewWidget;

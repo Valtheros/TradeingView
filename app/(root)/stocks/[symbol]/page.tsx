@@ -4,6 +4,14 @@ import { getStockProfile } from "@/lib/actions/finnhub.actions";
 import { getUserWatchlist } from "@/lib/actions/watchlist.actions";
 import { resolveTradingViewSymbol } from "@/lib/tradingview/symbol-search";
 import { parseSymbols } from "@/lib/quotes";
+import { Suspense } from "react";
+import StockChart from "@/components/StockChart";
+import { companyLogoUrl } from "@/lib/company-logos";
+
+async function ResolvedChart({ symbol, company }: { symbol: string; company: string }) {
+  const match = await resolveTradingViewSymbol(symbol, company);
+  return <StockChart key={symbol} widgetSymbol={match?.widgetSymbol || null} />;
+}
 
 export default async function StockPage({ params }: StockDetailsPageProps) {
   const { symbol: raw } = await params;
@@ -13,7 +21,5 @@ export default async function StockPage({ params }: StockDetailsPageProps) {
   const [profile, watchlist] = await Promise.all([getStockProfile(symbol), getUserWatchlist()]);
   const saved = watchlist.find((stock: { symbol: string }) => stock.symbol === symbol);
   const company = profile?.name || saved?.company || symbol;
-  const match = await resolveTradingViewSymbol(symbol, company);
-  if (!match) notFound();
-  return <StockDetails symbol={symbol} company={company} widgetSymbol={match.widgetSymbol} followed={Boolean(saved)} />;
+  return <StockDetails symbol={symbol} company={company} logo={companyLogoUrl(profile?.logo)} followed={Boolean(saved)}><Suspense fallback={<div className="chart-surface skeleton-block" style={{ height: 460 }} aria-busy="true" />}><ResolvedChart symbol={symbol} company={company} /></Suspense></StockDetails>;
 }

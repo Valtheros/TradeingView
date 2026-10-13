@@ -1,13 +1,13 @@
 import Header from "@/components/Header";
-import { getAuth } from "@/lib/better-auth/auth";
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/better-auth/session";
+import { Suspense } from "react";
+import AppBootSkeleton from "@/components/AppBootSkeleton";
 import { redirect } from "next/navigation";
 import NavItems from "@/components/NavItems";
 import LanguageSurface from "@/components/LanguageSurface";
 
-const layout = async ({ children }: { children: React.ReactNode }) => {
-  const auth = await getAuth();
-  const session = await auth.api.getSession({ headers: await headers() });
+async function AuthenticatedShell({ children }: { children: React.ReactNode }) {
+  const session = await getCurrentSession();
   if(!session?.user) redirect('/sign-in');
   const user = {
     id: session.user.id,
@@ -21,6 +21,8 @@ const layout = async ({ children }: { children: React.ReactNode }) => {
       <NavItems mobile />
     </div>
   );
-};
+}
 
-export default layout;
+export default function Layout({ children }: { children: React.ReactNode }) {
+  return <Suspense fallback={<AppBootSkeleton />}><AuthenticatedShell>{children}</AuthenticatedShell></Suspense>;
+}

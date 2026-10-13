@@ -5,11 +5,10 @@ import {
   removeFromWatchlist,
 } from '@/lib/actions/watchlist.actions';
 import { Star, Trash2 } from 'lucide-react';
-import React, { useMemo, useState } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { interpolate } from '@/lib/i18n';
 import { useLanguage } from './LanguageProvider';
-import { useRouter } from 'next/navigation';
 
 const WatchlistButton = ({
   symbol,
@@ -20,7 +19,6 @@ const WatchlistButton = ({
   onWatchlistChange,
 }: WatchlistButtonProps) => {
   const { dictionary } = useLanguage();
-  const router = useRouter();
   const copy = dictionary.watchlist;
   const [added, setAdded] = useState<boolean>(!!isInWatchlist);
   const [pending, setPending] = useState(false);
@@ -30,11 +28,6 @@ const WatchlistButton = ({
     setPreviousFollowed(isInWatchlist);
     setAdded(!!isInWatchlist);
   }
-
-  const label = useMemo(() => {
-    if (type === 'icon') return added ? '' : '';
-    return added ? copy.remove : copy.add;
-  }, [added, copy.add, copy.remove, type]);
 
   const toggleWatchlist = async (nextAdded: boolean) => {
     const result = nextAdded
@@ -50,7 +43,6 @@ const WatchlistButton = ({
       });
 
       onWatchlistChange?.(symbol, nextAdded);
-      router.refresh();
       return true;
     }
 
@@ -97,6 +89,8 @@ const WatchlistButton = ({
         }
         className={`watchlist-icon-btn ${added ? 'watchlist-icon-added' : ''}`}
         disabled={pending}
+        aria-pressed={added}
+        aria-busy={pending}
         onClick={handleClick}
       >
         {showTrashIcon && added ? <Trash2 size={18} /> : <Star size={18} fill={added ? 'currentColor' : 'none'} />}
@@ -108,10 +102,12 @@ const WatchlistButton = ({
     <button
       className={`watchlist-btn ${added ? 'watchlist-remove' : ''}`}
       disabled={pending}
+      aria-pressed={added}
+      aria-busy={pending}
       onClick={handleClick}
     >
-      {showTrashIcon && added ? <Trash2 /> : null}
-      <span>{label}</span>
+      {added ? <Trash2 size={18} /> : <Star size={18} />}
+      <span>{added ? copy.remove : copy.add}</span>
     </button>
   );
 };

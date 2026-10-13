@@ -7,14 +7,25 @@ const source = readFileSync(new URL("../public/sw.js", import.meta.url), "utf8")
 function worker(fetcher = async () => new Response("network")) {
   const handlers = {};
   const removed = [];
+  const saved = [];
   const cached = new Response("offline");
   vm.runInNewContext(source, {
     URL, Response, fetch: fetcher,
     self: { location: { origin: "https://stocks.example" }, addEventListener: (event, handler) => { handlers[event] = handler; }, skipWaiting() {}, clients: { claim: async () => {} } },
-    caches: { match: async () => cached, keys: async () => ["stockmarket-shell-v0", "stockmarket-shell-v1", "unrelated-app"], delete: async (key) => { removed.push(key); } },
+    caches: { open: async () => ({ addAll: async assets => saved.push(...assets) }), match: async () => cached, keys: async () => ["stockmarket-shell-v0", "stockmarket-shell-v1", "stockmarket-shell-v2", "unrelated-app"], delete: async (key) => { removed.push(key); } },
   });
-  return { handlers, removed };
+  return { handlers, removed, saved };
 }
+
+test("worker installation caches only the offline screen and brand images, including iPhone startup images", async () => {
+  const { handlers, saved } = worker();
+  let finished;
+  handlers.install({ waitUntil(promise) { finished = promise; } });
+  await finished;
+  assert.ok(saved.includes("/assets/icons/startup-iphone17-portrait.png"));
+  assert.ok(saved.includes("/assets/icons/startup-iphone17-landscape.png"));
+  assert.ok(saved.every(path => path === "/offline.html" || /^\/assets\/icons\/[a-z0-9-]+\.png$/.test(path)));
+});
 
 test("worker ignores APIs, POSTs, RSC and third-party resources", () => {
   const { handlers } = worker();
@@ -39,5 +50,5 @@ test("worker activation removes only obsolete StockMarket shell caches", async (
   let finished;
   handlers.activate({ waitUntil(promise) { finished = promise; } });
   await finished;
-  assert.deepEqual(removed, ["stockmarket-shell-v0"]);
+  assert.deepEqual(removed, ["stockmarket-shell-v0", "stockmarket-shell-v1"]);
 });
