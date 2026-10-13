@@ -30,7 +30,7 @@ export default async function Today() {
   const locale = await getServerLocale();
   const copy = getDictionary(locale).daily;
   return <div className="daily-page">
-    <div className="page-heading"><div><p className="section-meta skeleton-text">{new Date().toLocaleDateString(locale === "th" ? "th-TH" : "en-US", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Bangkok" })}</p><h1 className="skeleton-text">{copy.today}</h1><p className="page-subtitle skeleton-text">{copy.subtitle}</p></div><span className="market-label">{copy.usMarket}<span>USD</span></span></div>
+    <div className="page-heading"><div><p className="section-meta skeleton-text">{new Date().toLocaleDateString(locale === "th" ? "th-TH" : "en-US", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Bangkok" })}</p><h1 className="skeleton-text">{copy.today}</h1></div><span className="market-label">{copy.usMarket}<span>USD</span></span></div>
     <div className="today-layout"><SectionBoundary><Suspense fallback={<StocksSkeleton />}><TodayStocks /></Suspense></SectionBoundary><SectionBoundary><Suspense fallback={<DigestSkeleton />}><TodayDigest locale={locale} /></Suspense></SectionBoundary></div>
     <MarketOverview />
   </div>;

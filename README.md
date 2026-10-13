@@ -2,7 +2,7 @@
 
 StockMarket is a mobile-first daily companion for US stocks. Check your watchlist, read your market digest in English or Thai, explore charts, and add the app to your phone's home screen.
 
-![StockMarket dashboard preview](public/assets/images/dashboard-preview.png)
+![StockMarket](public/assets/icons/logo.svg)
 
 ## What It Does
 
@@ -114,7 +114,9 @@ Use the deployed **HTTPS** URL, sign in, then open **Account > Install app**.
 - The installed icon opens StockMarket in its own window. An expired session returns to sign-in.
 - Installation controls are hidden inside the installed app. Browser support and install prompts vary.
 
-The service worker runs only in a **production build**. It caches only the bilingual offline screen and app icons, never authenticated HTML, RSC payloads, API responses, stock quotes, or personal news. When offline, opening the app shows a reconnect/retry screen.
+The service worker runs only in a **production build**. It caches only the bilingual offline screen, app icons, and branded iPhone startup images, never authenticated HTML, RSC payloads, API responses, stock quotes, or personal news. When offline, opening the app shows a reconnect/retry screen.
+
+iPhone 17 startup images cover portrait and landscape at 402 x 874 CSS pixels / 3x resolution. Their background matches the app. Regenerate them from the existing logo with `node scripts/generate-startup-images.mjs`. Other screen sizes still use the normal system startup screen; actual iOS splash behavior must be verified on a device.
 
 `http://localhost` is suitable for desktop checks, but opening a computer's LAN IP over HTTP on a phone does not provide the HTTPS installation environment. Test actual Android/iPhone installation using the deployed HTTPS origin. Set `BETTER_AUTH_URL` and `TRUSTED_ORIGINS` for that origin.
 
@@ -125,6 +127,16 @@ The service worker runs only in a **production build**. It caches only the bilin
 - The browser refreshes only displayed symbols and pauses while hidden or offline. It retains previously fetched values with a warning if an update fails.
 - Inngest still generates both digest languages on signup and the existing daily schedule. Missing digests can be queued with a deduplicated event. The UI checks every 15 seconds for up to two minutes, then offers another check.
 - Existing English documents without a locale are still supported. No data migration is needed. Existing digest storage keeps the latest document per user/language; this release does not backfill historical editions.
+
+## Startup and Loading
+
+- A public logo/navigation skeleton streams before session validation. Private content is shown only after authentication succeeds. Authentication screens without a session cookie skip MongoDB entirely.
+- Server components share a session read using request-scoped `React.cache()`, not a shared user/session cache. Today loads stocks and news independently; failed reads have a retry state instead of being treated as missing news.
+- Today reads one short, markup-free digest preview. The news route still reads the complete sanitized HTML and any saved previous editions, with the original dates and language labels.
+- Search and installation dialogs load when opened. Market widgets start when scrolled into view; stock analysis tabs load on demand. TradingView resolution runs separately from the stock header, with an 8-second external-request timeout.
+- Main navigation keeps Next.js prefetching. Stock pages prefetch on hover, focus, or touch, not for every offscreen row. Server-side reads/prefetches never queue news generation.
+- Watchlist writes validate symbols and company names, add atomically, and invalidate Today, watchlist, and the affected stock page. The UI retains optimistic updates and rolls back failed writes.
+- Language transitions mask the existing content in place rather than replacing the entire screen. The header, bottom navigation, chart dimensions, and scroll position are retained; initial-load skeletons use the same row and section geometry.
 
 ## Production and Verification
 
@@ -138,7 +150,21 @@ npm start
 
 To build separately while a development server is running, PowerShell can set `$env:NEXT_DIST_DIR = '.next-build'` before `npm run build`. Use the same variable for `npm start`, and remove it before normal development. This prevents build artifacts from overwriting the active development output.
 
-For a release, verify 360px, 390px, 768px and desktop layouts in both languages, watchlist changes, search, chart switching, quote refresh/visibility behavior, fallback news, and long-page language skeletons. Verify manifest/icons without signing in, then test installation and offline navigation with a production build. Desktop emulation is not a substitute for actual iPhone/Android installation tests.
+For a release, verify 360px, 390px, 402px, 768px and desktop layouts in both languages, watchlist changes, search, chart switching, quote refresh/visibility behavior, fallback news, and long-page language skeletons. Verify manifest/icons without signing in, then test installation and offline navigation with a production build. Desktop emulation is not a substitute for actual iPhone/Android installation tests.
+
+### Preview and iPhone Acceptance
+
+Push the review branch to obtain a Vercel **preview**, not production. Preview authentication uses the exact `VERCEL_URL` origin; production continues using `BETTER_AUTH_URL` / `TRUSTED_ORIGINS`. Configure required backend environment variables for Preview as well as Production. A protected preview requires an authorized Vercel share link before signing in.
+
+Before merging/pushing `main`, check on iPhone 17 / Safari using the HTTPS preview:
+
+1. Open while signed out, sign in, and reopen after closing the app. Compare the first visible shell and fully loaded data separately.
+2. Add to Home Screen and open from the icon in both orientations. Confirm branding replaces the blank startup screen on the device.
+3. Search, follow/unfollow, open a stock, switch chart/analysis tabs, and switch EN/TH halfway down a long news page.
+4. Reopen offline and retry after reconnecting. Load the updated service worker and verify that obsolete shell caches disappear while private pages are never stored.
+5. Repeat a cold and warm load on the same network. The shell target is under two seconds on a normal test connection, not a guarantee for iOS startup or hosting/database cold starts.
+
+Keep physical-device results separate from browser emulation. Do not mark the iPhone startup issue resolved until device checks pass. No database-region changes, Redis cache, trading, portfolios, or price alerts are included.
 
 Next.js is pinned to the patched 16.3.8 stable release. See the [September 2026 security release](https://nextjs.org/blog/september-2026-security-release) and run `npm audit` regularly; a clean audit describes known advisories at that time, not a permanent guarantee.
 
@@ -170,7 +196,7 @@ npx tsc --noEmit
 
 ## Testing Notes
 
-The test suite covers TradingView symbol matching, Finnhub configuration, authenticated quote requests, validation, cache expiry, rate limits, partial failures, refresh eligibility, digest language fallback/authentication, and service-worker offline/cache boundaries:
+The test suite covers TradingView symbol matching, Finnhub configuration, authenticated quote requests, validation, cache expiry, rate limits, partial failures, refresh eligibility, request-scoped session isolation, exact preview origins, idempotent watchlist writes, digest previews/database failures, language fallback/authentication, and service-worker offline/cache boundaries:
 
 ```bash
 npm test

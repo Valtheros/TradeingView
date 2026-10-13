@@ -40,15 +40,13 @@ export default function DigestPanel({ initial, preview = false }: { initial: Dig
 
   const latest = state.summaries[0];
   return <section className={preview ? "digest-section" : "news-section"}>
-    <div className="section-heading"><h2 className="skeleton-text"><Newspaper size={20} />{preview ? copy.latestDigest : copy.news}</h2>
-      {preview && latest && <Link className="text-action" href="/news">{copy.readDigest}<ArrowUpRight size={17} /></Link>}
-    </div>
+    <div className="section-heading"><h2 className="skeleton-text"><Newspaper size={20} />{preview ? copy.latestDigest : copy.news}</h2></div>
     {state.pending && <div className="digest-status" role="status">
       <p>{error ? copy.newsError : state.fallback ? copy.fallback : stopped ? copy.waitingLater : copy.waiting}</p>
       {(error || stopped) && <button className="text-action" onClick={() => { setStopped(false); setError(false); setAttempt((n) => n + 1); }}><RefreshCw size={16} />{copy.checkNews}</button>}
     </div>}
     {latest ? <article className="digest-article">
-      <div className="digest-meta skeleton-text"><span>{latest.date}</span><span>{latest.locale.toUpperCase()}</span></div>
+      <div className="digest-meta skeleton-text"><span>{latest.date}</span><span className="digest-language">{latest.locale.toUpperCase()}</span></div>
       <div className={preview ? "summary-html digest-preview" : "summary-html digest-full"} dangerouslySetInnerHTML={{ __html: latest.html }} />
       {preview && <Link href="/news" className="digest-read-link">{copy.readDigest}<ArrowUpRight size={18} /></Link>}
     </article> : <div className="empty-digest"><Newspaper size={28} /><p>{copy.emptyNews}</p></div>}

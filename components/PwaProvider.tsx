@@ -5,7 +5,7 @@ import { Download } from "lucide-react";
 import dynamic from "next/dynamic";
 import { useLanguage } from "./LanguageProvider";
 
-const InstallDialog = dynamic(() => import("./InstallDialog"), { ssr: false });
+const InstallDialog = dynamic(() => import("./InstallDialog"), { ssr: false, loading: () => <div className="dialog-loading-backdrop" role="status" aria-label="Loading"><div className="install-loading-panel"><span className="skeleton-block h-7 w-7" /><span className="skeleton-block h-6 w-40" /><span className="skeleton-block h-16 w-full" /></div></div> });
 
 type InstallEvent = Event & { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> };
 const PwaContext = createContext({ installed: false, open: () => {} });
