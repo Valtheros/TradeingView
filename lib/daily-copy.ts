@@ -1,5 +1,6 @@
 export const dailyCopy = {
   en: {
+    loadError: "Unable to load this section. Please try again.", retry: "Try again",
     today: "Today", subtitle: "Your daily market check-in", yourStocks: "Your stocks", popular: "Popular stocks",
     viewAll: "View all", latestDigest: "Latest digest", readDigest: "Read digest", market: "Market overview", heatmap: "Heatmap",
     refresh: "Refresh prices", checked: "Checked", quoteTime: "Price as of", stale: "Last available price", unavailable: "Unavailable",
@@ -17,6 +18,7 @@ export const dailyCopy = {
     noWatchlist: "No stocks followed yet", startWatchlist: "Add a stock", marketUnavailable: "Market chart is unavailable. Try again.",
   },
   th: {
+    loadError: "โหลดข้อมูลส่วนนี้ไม่สำเร็จ กรุณาลองอีกครั้ง", retry: "ลองอีกครั้ง",
     today: "วันนี้", subtitle: "ติดตามความเคลื่อนไหวของหุ้นในแต่ละวัน", yourStocks: "หุ้นของคุณ", popular: "หุ้นยอดนิยม",
     viewAll: "ดูทั้งหมด", latestDigest: "สรุปข่าวล่าสุด", readDigest: "อ่านสรุปข่าว", market: "ภาพรวมตลาด", heatmap: "ฮีตแมป",
     refresh: "อัปเดตราคา", checked: "ตรวจสอบล่าสุด", quoteTime: "ราคา ณ", stale: "ราคาล่าสุดที่มี", unavailable: "ไม่มีข้อมูล",

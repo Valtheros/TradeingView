@@ -1,5 +1,4 @@
-import { getAuth } from "@/lib/better-auth/auth";
-import { headers } from "next/headers";
+import { getCurrentSession } from "@/lib/better-auth/session";
 import Image from "next/image"
 import Link from "next/link"
 import { redirect } from "next/navigation";
@@ -11,8 +10,7 @@ const layout = async ({ children }: { children: React.ReactNode }) => {
     const locale = await getServerLocale();
     const dictionary = getDictionary(locale);
     const copy = dictionary.authLayout;
-    const auth = await getAuth();
-    const session = await auth.api.getSession({ headers: await headers() });
+    const session = await getCurrentSession();
     if(session?.user) redirect('/')
     return (
     <main className="auth-layout">

@@ -8,6 +8,7 @@ import type { StockQuote } from "@/lib/quotes";
 import { useLanguage } from "./LanguageProvider";
 import WatchlistButton from "./WatchlistButton";
 import SearchCommand from "./SearchCommand";
+import StockLink from "./StockLink";
 
 export type FollowedStock = { symbol: string; company: string; followed: boolean };
 
@@ -52,9 +53,9 @@ export default function StockList({ stocks, compact = false }: { stocks: Followe
       <ul className="daily-stock-list">{visible.map((stock) => {
         const quote = data.quotes[stock.symbol];
         return <li key={stock.symbol} className="daily-stock-row">
-          <Link href={`/stocks/${encodeURIComponent(stock.symbol)}`} className="stock-identity"><span className="stock-monogram" aria-hidden="true">{stock.symbol.slice(0, 2)}</span><span className="stock-name skeleton-text"><strong>{stock.symbol}</strong><small>{stock.company}</small></span></Link>
+          <StockLink href={`/stocks/${encodeURIComponent(stock.symbol)}`} className="stock-identity"><span className="stock-monogram" aria-hidden="true">{stock.symbol.slice(0, 2)}</span><span className="stock-name skeleton-text"><strong>{stock.symbol}</strong><small>{stock.company}</small></span></StockLink>
           <span className="stock-quote-time skeleton-text">{quote?.quoteTime ? new Date(quote.quoteTime).toLocaleString(locale === "th" ? "th-TH" : "en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "--"}</span>
-          <Link href={`/stocks/${encodeURIComponent(stock.symbol)}`} aria-label={`${stock.symbol} ${copy.price}`}><QuoteValue quote={quote} loading={data.loading || !data.checkedAt && !data.error && !data.offline} /></Link>
+          <StockLink href={`/stocks/${encodeURIComponent(stock.symbol)}`} aria-label={`${stock.symbol} ${copy.price}`}><QuoteValue quote={quote} loading={data.loading || !data.checkedAt && !data.error && !data.offline} /></StockLink>
           <WatchlistButton symbol={stock.symbol} company={stock.company} isInWatchlist={stock.followed} type="icon" showTrashIcon={!compact} />
         </li>;
       })}</ul>

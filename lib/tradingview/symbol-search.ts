@@ -19,6 +19,7 @@ const fetchTradingViewResults = async (query: string) => {
       Origin: "https://www.tradingview.com",
     },
     next: { revalidate: 3600 },
+    signal: AbortSignal.timeout(8000),
   });
 
   if (!response.ok) return [];

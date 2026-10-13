@@ -1,7 +1,7 @@
 import { getNews } from "../actions/finnhub.actions";
 import { saveUserNewsSummary } from "../actions/saveusernews.action";
 import { getAllUserForNews } from "../actions/user.action";
-import { getWatchlistSymbolsByEmail } from "../actions/watchlist.actions";
+import { getWatchlistSymbolsByEmail } from "../watchlist-server";
 import { sendWelcomeEmail } from "../nodemailer";
 import { getFormattedTodayDateForLocale, getTodayString } from "../utils";
 import { isLocale } from "../i18n";

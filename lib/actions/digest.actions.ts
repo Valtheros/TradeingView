@@ -1,7 +1,7 @@
 "use server";
 
-import { headers } from "next/headers";
-import { getAuth } from "@/lib/better-auth/auth";
+import { getCurrentSession } from "@/lib/better-auth/session";
+import { summaryPreview } from "@/lib/sanitize";
 import { getRecentNewsSummaries } from "./saveusernews.action";
 import { inngest } from "@/lib/inngest/client";
 import { isLocale, type Locale } from "@/lib/i18n";
@@ -10,22 +10,25 @@ export type Digest = { id: string; date: string; html: string; locale: Locale; u
 export type DigestState = { summaries: Digest[]; pending: boolean; fallback: boolean };
 
 async function currentUser() {
-  const auth = await getAuth();
-  const session = await auth.api.getSession({ headers: await headers() });
+  const session = await getCurrentSession();
   if (!session?.user) throw new Error("Unauthorized");
   return session.user;
 }
 
-export async function getDigestState(locale: Locale): Promise<DigestState> {
+export async function getDigestState(locale: Locale, view: "full" | "preview" = "full"): Promise<DigestState> {
   if (!isLocale(locale)) throw new Error("Invalid locale");
+  if (view !== "full" && view !== "preview") throw new Error("Invalid digest view");
   const user = await currentUser();
-  let summaries = await getRecentNewsSummaries(user.id, 5, locale);
+  const limit = view === "preview" ? 1 : 5;
+  let summaries = await getRecentNewsSummaries(user.id, limit, locale);
   const pending = summaries.length === 0;
-  if (pending && locale === "th") summaries = await getRecentNewsSummaries(user.id, 5, "en");
+  if (pending && locale === "th") summaries = await getRecentNewsSummaries(user.id, limit, "en");
   return {
     pending, fallback: pending && summaries.length > 0,
     summaries: summaries.map((summary) => ({
-      id: summary.id, date: summary.readableDate, html: summary.newsContent, locale: summary.locale || "en",
+      id: summary.id, date: summary.readableDate,
+      html: view === "preview" ? summaryPreview(summary.newsContent, summary.locale || "en") : summary.newsContent,
+      locale: summary.locale || "en",
       updatedAt: summary.updatedAt?.toISOString() || null,
     })),
   };

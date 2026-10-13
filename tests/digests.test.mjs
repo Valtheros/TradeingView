@@ -3,19 +3,25 @@ import { readFileSync } from "node:fs";
 import { runInNewContext } from "node:vm";
 import test from "node:test";
 import ts from "typescript";
+import { createRequire } from "node:module";
+
+const require = createRequire(import.meta.url);
+const sanitizeSource = readFileSync(new URL("../lib/sanitize.ts", import.meta.url), "utf8");
+const sanitizeExports = {};
+runInNewContext(ts.transpileModule(sanitizeSource, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText, { exports: sanitizeExports, require });
 
 const source = readFileSync(new URL("../lib/actions/digest.actions.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
 const english = { id: "edition-en", readableDate: "October 2, 2026", newsContent: "<p>Saved news</p>", updatedAt: new Date("2026-10-02T20:00:00Z") };
 
-function setup({ signedIn = true, en = [english], th = [] } = {}) {
+function setup({ signedIn = true, en = [english], th = [], databaseError = false } = {}) {
   const reads = [];
   const events = [];
   const exports = {};
   const modules = {
-    "next/headers": { headers: async () => new Headers() },
-    "@/lib/better-auth/auth": { getAuth: async () => ({ api: { getSession: async () => signedIn ? { user: { id: "current-user" } } : null } }) },
-    "./saveusernews.action": { getRecentNewsSummaries: async (user, limit, locale) => { reads.push({ user, limit, locale }); return locale === "th" ? th : en; } },
+    "@/lib/better-auth/session": { getCurrentSession: async () => signedIn ? { user: { id: "current-user" } } : null },
+    "@/lib/sanitize": sanitizeExports,
+    "./saveusernews.action": { getRecentNewsSummaries: async (user, limit, locale) => { if (databaseError) throw new Error("Database unavailable"); reads.push({ user, limit, locale }); return (locale === "th" ? th : en).slice(0, limit); } },
     "@/lib/inngest/client": { inngest: { send: async event => { events.push(event); } } },
     "@/lib/i18n": { isLocale: locale => locale === "en" || locale === "th" },
   };
@@ -35,6 +41,28 @@ test("missing Thai digest keeps the saved English edition and its actual date", 
   assert.equal(state.summaries[0].date, english.readableDate);
   assert.equal(state.summaries[0].html, english.newsContent);
   assert.deepEqual(api.reads.map(r => r.locale), ["th", "en"]);
+  assert.equal(api.events.length, 0);
+});
+
+test("preview reads one saved edition, strips markup and preserves dates without modifying full news", async () => {
+  const edition = { ...english, newsContent: `<h2>Market</h2><p>${"ข่าวทดสอบ ".repeat(300)}</p><script>alert(1)</script>` };
+  const api = setup({ en: [edition, { ...edition, id: "older" }] });
+  const preview = await api.getDigestState("th", "preview");
+  assert.equal(preview.summaries.length, 1);
+  assert.equal(preview.summaries[0].date, edition.readableDate);
+  assert.equal(preview.summaries[0].locale, "en");
+  assert.equal(preview.fallback, true);
+  assert.ok(preview.summaries[0].html.length < edition.newsContent.length);
+  assert.doesNotMatch(preview.summaries[0].html, /<|alert/);
+  assert.ok(api.reads.every(read => read.limit === 1));
+  assert.equal((await api.getDigestState("en")).summaries[0].html, edition.newsContent);
+  await assert.rejects(api.getDigestState("en", "invalid"), /Invalid digest view/);
+});
+
+test("database failure is not mistaken for missing news and never queues generation", async () => {
+  const api = setup({ databaseError: true });
+  await assert.rejects(api.getDigestState("th"), /Database unavailable/);
+  await assert.rejects(api.queueDigest("th"), /Database unavailable/);
   assert.equal(api.events.length, 0);
 });
 

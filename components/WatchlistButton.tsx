@@ -9,7 +9,6 @@ import React, { useMemo, useState } from 'react';
 import { toast } from 'sonner';
 import { interpolate } from '@/lib/i18n';
 import { useLanguage } from './LanguageProvider';
-import { useRouter } from 'next/navigation';
 
 const WatchlistButton = ({
   symbol,
@@ -20,7 +19,6 @@ const WatchlistButton = ({
   onWatchlistChange,
 }: WatchlistButtonProps) => {
   const { dictionary } = useLanguage();
-  const router = useRouter();
   const copy = dictionary.watchlist;
   const [added, setAdded] = useState<boolean>(!!isInWatchlist);
   const [pending, setPending] = useState(false);
@@ -50,7 +48,6 @@ const WatchlistButton = ({
       });
 
       onWatchlistChange?.(symbol, nextAdded);
-      router.refresh();
       return true;
     }
 

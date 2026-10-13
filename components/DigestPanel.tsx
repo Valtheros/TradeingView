@@ -24,7 +24,7 @@ export default function DigestPanel({ initial, preview = false }: { initial: Dig
       busy = true;
       ticks++;
       try {
-        const next = await getDigestState(locale);
+        const next = await getDigestState(locale, preview ? "preview" : "full");
         if (!cancelled) { setState(next); setError(false); }
         if (!next.pending) clearInterval(timer);
       } catch { if (!cancelled) setError(true); }
@@ -36,7 +36,7 @@ export default function DigestPanel({ initial, preview = false }: { initial: Dig
     // A bounded session also stops while the app is hidden or offline.
     const deadline = setTimeout(() => { clearInterval(timer); if (!cancelled) setStopped(true); }, 120_000);
     return () => { cancelled = true; clearInterval(timer); clearTimeout(deadline); };
-  }, [initial.pending, locale, attempt]);
+  }, [initial.pending, locale, attempt, preview]);
 
   const latest = state.summaries[0];
   return <section className={preview ? "digest-section" : "news-section"}>

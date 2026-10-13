@@ -26,7 +26,13 @@ export const metadata: Metadata = {
   title: { default: "StockMarket | Today", template: "%s | StockMarket" },
   description: "Your daily stocks, watchlist and market digest.",
   applicationName: "StockMarket",
-  appleWebApp: { capable: true, title: "StockMarket", statusBarStyle: "black-translucent" },
+  appleWebApp: {
+    capable: true, title: "StockMarket", statusBarStyle: "black-translucent",
+    startupImage: [
+      { url: "/assets/icons/startup-iphone17-portrait.png", media: "(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" },
+      { url: "/assets/icons/startup-iphone17-landscape.png", media: "(device-width: 402px) and (device-height: 874px) and (-webkit-device-pixel-ratio: 3) and (orientation: landscape)" },
+    ],
+  },
   icons: { apple: "/assets/icons/apple-touch-icon.png", icon: "/assets/icons/app-192.png" },
 };
 

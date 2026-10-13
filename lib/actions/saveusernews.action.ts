@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import { connecttoDatabase } from "@/database/mongoose";
 import { sanitizeSummaryHtml } from "@/lib/sanitize";
@@ -110,7 +110,7 @@ export const getRecentNewsSummaries = async (
     return docs.map(mapSummary);
   } catch (err) {
     console.error("getRecentNewsSummaries error:", err);
-    return [];
+    throw new Error("Failed to read news summaries");
   }
 };
 

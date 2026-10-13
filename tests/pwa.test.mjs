@@ -11,7 +11,7 @@ function worker(fetcher = async () => new Response("network")) {
   vm.runInNewContext(source, {
     URL, Response, fetch: fetcher,
     self: { location: { origin: "https://stocks.example" }, addEventListener: (event, handler) => { handlers[event] = handler; }, skipWaiting() {}, clients: { claim: async () => {} } },
-    caches: { match: async () => cached, keys: async () => ["stockmarket-shell-v0", "stockmarket-shell-v1", "unrelated-app"], delete: async (key) => { removed.push(key); } },
+    caches: { match: async () => cached, keys: async () => ["stockmarket-shell-v0", "stockmarket-shell-v1", "stockmarket-shell-v2", "unrelated-app"], delete: async (key) => { removed.push(key); } },
   });
   return { handlers, removed };
 }
@@ -39,5 +39,5 @@ test("worker activation removes only obsolete StockMarket shell caches", async (
   let finished;
   handlers.activate({ waitUntil(promise) { finished = promise; } });
   await finished;
-  assert.deepEqual(removed, ["stockmarket-shell-v0"]);
+  assert.deepEqual(removed, ["stockmarket-shell-v0", "stockmarket-shell-v1"]);
 });
