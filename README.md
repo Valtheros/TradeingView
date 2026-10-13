@@ -150,6 +150,8 @@ npm start
 
 To build separately while a development server is running, PowerShell can set `$env:NEXT_DIST_DIR = '.next-build'` before `npm run build`. Use the same variable for `npm start`, and remove it before normal development. This prevents build artifacts from overwriting the active development output.
 
+Persisted Turbopack **build** cache is disabled because a restored Vercel build emitted stale global CSS during preview checks. This affects build speed, not the quote cache, request-scoped session reads, or runtime data caching. Development caching remains enabled.
+
 For a release, verify 360px, 390px, 402px, 768px and desktop layouts in both languages, watchlist changes, search, chart switching, quote refresh/visibility behavior, fallback news, and long-page language skeletons. Verify manifest/icons without signing in, then test installation and offline navigation with a production build. Desktop emulation is not a substitute for actual iPhone/Android installation tests.
 
 ### Preview and iPhone Acceptance
