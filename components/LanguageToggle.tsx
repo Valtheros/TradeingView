@@ -9,7 +9,7 @@ export default function LanguageToggle({ className }: { className?: string }) {
   return (
     <button type="button" className={cn("language-toggle", className)}
       onClick={() => setLocale(locale === "en" ? "th" : "en")}
-      disabled={isPending} aria-busy={isPending} aria-label={dictionary.common.language} title={dictionary.common.language}>
+      disabled={isPending} aria-busy={isPending} aria-label={`${dictionary.common.language} ${locale === "en" ? "TH" : "EN"}`} title={dictionary.common.language}>
       <Languages size={18} /><span>{locale === "en" ? "TH" : "EN"}</span>
     </button>
   );

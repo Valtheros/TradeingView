@@ -35,10 +35,10 @@ const UserDropdown = ({ user }: { user: User }) => {
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
-          aria-label={dictionary.daily.account}
+          aria-label={`${dictionary.daily.account} ${user.name || ""}`.trim()}
           className="account-trigger flex items-center gap-3"
         >
-          <Avatar className="h-8 w-8">
+          <Avatar className="h-8 w-8" aria-hidden="true">
             <AvatarFallback className="bg-gray-700 text-yellow-400 text-sm font-semibold">
               {user.name?.[0] || "S"}
             </AvatarFallback>
