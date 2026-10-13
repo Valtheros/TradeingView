@@ -27,6 +27,7 @@ test("auth initializes once and trusts only the exact preview host without chang
       "better-auth/next-js": { nextCookies: () => ({}) },
       "better-auth/plugins": { emailOTP: () => ({}) },
       "../nodemailer": { sendOTPEmail: async () => {} },
+      "next/server": { after: () => {} },
     }, { process: { env: { VERCEL_ENV: environment, VERCEL_URL: "stockmarket-test.vercel.app", BETTER_AUTH_URL: "https://stockmarket-fdev.vercel.app", TRUSTED_ORIGINS: "https://stockmarket-fdev.vercel.app, " } } });
     const [a, b] = await Promise.all([api.getAuth(), api.getAuth()]);
     assert.equal(a, b);

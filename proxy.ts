@@ -14,6 +14,6 @@ const sessionCookie = getSessionCookie(request);
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|sign-in|sign-up|assets|verify-email).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|sign-in|sign-up|forgot-password|assets|verify-email).*)',
   ],
 };

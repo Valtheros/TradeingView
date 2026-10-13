@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
+import Link from "next/link";
 
 const Signin = () => {
   const { dictionary } = useLanguage();
@@ -70,6 +71,10 @@ const Signin = () => {
             minLength: {value: 8, message: copy.passwordMin},
           }}
         />
+
+        <Link href="/forgot-password" className="footer-link flex min-h-11 items-center justify-end text-sm">
+          {copy.forgotPassword}
+        </Link>
 
         <Button
           type="submit"

@@ -273,7 +273,7 @@ export const OTP_EMAIL_TEMPLATE = `<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="format-detection" content="telephone=no">
     <meta name="x-apple-disable-message-reformatting">
-    <title>Verify Your Email</title>
+    <title>{{title}}</title>
     <!--[if mso]>
     <noscript>
         <xml>
@@ -364,12 +364,12 @@ export const OTP_EMAIL_TEMPLATE = `<!DOCTYPE html>
                             
                             <!-- Heading -->
                             <h1 class="mobile-title dark-text" style="margin: 0 0 20px 0; font-size: 24px; font-weight: 600; color: #FDD458; line-height: 1.2; text-align: center;">
-                                Verify Your Email
+                                {{title}}
                             </h1>
                             
                             <!-- Intro Text -->
                             <p class="mobile-text dark-text-secondary" style="margin: 0 0 30px 0; font-size: 16px; line-height: 1.6; color: #CCDADC; text-align: center;">
-                                Please use the verification code below to complete your sign-up.
+                                {{description}}
                             </p>
                             
                             <!-- OTP Box -->
@@ -381,7 +381,7 @@ export const OTP_EMAIL_TEMPLATE = `<!DOCTYPE html>
                             
                             <!-- Expiry Warning -->
                             <p class="mobile-text dark-text-secondary" style="margin: 0 0 30px 0; font-size: 14px; line-height: 1.6; color: #9ca3af; text-align: center;">
-                                This code will expire in 10 minutes. If you didn't request this code, you can safely ignore this email.
+                                {{expiry}}
                             </p>
                             
                             <!-- Footer Text -->

@@ -14,7 +14,7 @@ StockMarket is a mobile-first daily companion for US stocks. Check your watchlis
 - Provides stock detail pages with a candle/line chart switch and company, financial, and technical widgets loaded on demand.
 - Saves a per-user watchlist in MongoDB and displays USD quotes, daily changes, and provider timestamps. Detailed financials remain available on the stock page.
 - Generates personalized daily market news summaries from each user's watchlist using Inngest and Gemini.
-- Supports email/password authentication with OTP email verification through Better Auth and Nodemailer.
+- Supports email/password authentication, OTP email verification, and password recovery through Better Auth and Nodemailer.
 - Sanitizes AI-generated news HTML before displaying it in the app.
 - Supports EN/TH through a persistent cookie and IBM Plex Sans Thai. Missing digests are generated in the background; Thai mode can show a labeled English fallback.
 - Installs as a Progressive Web App (PWA) with an offline/retry screen. Account pages, prices, and personalized news are never saved by the service worker.
@@ -42,6 +42,7 @@ StockMarket is a mobile-first daily companion for US stocks. Check your watchlis
 | `/stocks/[symbol]` | Live-refreshing quote, switchable chart, and on-demand analysis. |
 | `/news` | Latest daily digest and any previously stored digests, in the selected language. |
 | `/sign-in` | Sign in with email and password. |
+| `/forgot-password` | Request an email code and set a new password, in English or Thai. |
 | `/sign-up` | Create an account and provide investing preferences. |
 | `/verify-email` | Verify account access with an email OTP. |
 
@@ -214,3 +215,6 @@ These tests help prevent unrelated TradingView search results from being accepte
 - AI-generated news HTML is sanitized before rendering.
 - Watchlist entries are unique per user and stored with a compound MongoDB index.
 - OTP requests use a MongoDB-backed rate limit model.
+- Password recovery uses Better Auth's single-use 6-digit OTPs, hashed in MongoDB with a 5-minute expiry and 3 incorrect attempts per code. Resetting a password revokes existing sessions. A request never confirms whether an email has an account.
+- Auth API rate limits are stored in MongoDB, including the OTP endpoints' limit of 3 requests per IP/path per 60 seconds. The form also waits 60 seconds before resending. No new email credentials are needed.
+- OTP email delivery uses Next.js `after` so Vercel can finish delivery after the generic response; SMTP failures are logged by the background task. Old verification codes issued before hashed storage was enabled must be requested again.

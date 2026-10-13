@@ -5,6 +5,7 @@ import { nextCookies } from "better-auth/next-js";
 import { emailOTP } from "better-auth/plugins";
 import { sendOTPEmail } from "../nodemailer";
 import type { Db } from "mongodb";
+import { after } from "next/server";
 
 const createAuthInstance = async () => {
   const mongoose = await connecttoDatabase();
@@ -23,6 +24,14 @@ const createAuthInstance = async () => {
       ...(process.env.TRUSTED_ORIGINS?.split(",").map(origin => origin.trim()).filter(Boolean) || []),
       ...(previewOrigin ? [previewOrigin] : []),
     ],
+    rateLimit: {
+      enabled: true,
+      storage: "database",
+    },
+    advanced: {
+      // Keep email delivery alive on Vercel without exposing account existence through SMTP timing.
+      backgroundTasks: { handler: (task) => after(() => task) },
+    },
     emailAndPassword: {
       enabled: true,
       disableSignUp: false,
@@ -30,23 +39,20 @@ const createAuthInstance = async () => {
       minPasswordLength: 8,
       maxPasswordLength: 128,
       autoSignIn: false,
+      revokeSessionsOnPasswordReset: true,
     },
     emailVerification: {
       autoSignInAfterVerification: true,
     },
     plugins: [
       emailOTP({
-        async sendVerificationOTP({ email, otp }) {
-          try {
-            console.log("Attempting to send OTP email to:", email);
-            await sendOTPEmail({
-              email,
-              otp,
-            });
-            console.log("OTP email sent successfully to:", email);
-          } catch (error) {
-            console.error("Error sending OTP email:", error);
-          }
+        otpLength: 6,
+        expiresIn: 300,
+        allowedAttempts: 3,
+        storeOTP: "hashed",
+        rateLimit: { window: 60, max: 3 },
+        async sendVerificationOTP({ email, otp, type }) {
+          await sendOTPEmail({ email, otp, purpose: type === "forget-password" ? "password-reset" : "verification" });
         },
       }),
       nextCookies(),
