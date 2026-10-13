@@ -9,6 +9,8 @@ import { useLanguage } from "./LanguageProvider";
 import WatchlistButton from "./WatchlistButton";
 import SearchCommand from "./SearchCommand";
 import StockLink from "./StockLink";
+import StockLogo from "./StockLogo";
+import { useCompanyLogos } from "@/hooks/useCompanyLogos";
 
 export type FollowedStock = { symbol: string; company: string; followed: boolean };
 
@@ -42,6 +44,7 @@ export default function StockList({ stocks, compact = false }: { stocks: Followe
   const current = Math.min(page, pageCount - 1);
   const visible = compact ? stocks.slice(0, 6) : stocks.slice(current * 20, current * 20 + 20);
   const data = useQuotes(visible.map((stock) => stock.symbol));
+  const logos = useCompanyLogos(visible.map((stock) => stock.symbol));
   return <section className="stocks-section">
     <div className="section-heading"><h2 className="skeleton-text">{compact ? stocks.some((s) => s.followed) ? copy.yourStocks : copy.popular : dictionary.watchlist.title}<span className="count-label">{compact ? visible.length : stocks.length}</span></h2>
       {compact ? <Link href="/watchlist" className="text-action">{copy.viewAll}<ArrowUpRight size={17} /></Link> : <SearchCommand />}
@@ -49,13 +52,19 @@ export default function StockList({ stocks, compact = false }: { stocks: Followe
     <QuoteStatus data={data} />
     {(data.error || data.unauthorized) && <p className="data-notice" role="status">{data.unauthorized ? <Link href="/sign-in">{copy.signInAgain}</Link> : copy.quoteError}</p>}
     {stocks.length === 0 ? <div className="empty-watchlist"><p>{copy.noWatchlist}</p><SearchCommand /></div> : <>
-      <div className="stock-column-labels"><span>{copy.stock}</span><span>{copy.quoteTime}</span><span>{copy.price} / {copy.change}</span><span className="sr-only">{dictionary.watchlist.table.action}</span></div>
-      <ul className="daily-stock-list">{visible.map((stock) => {
+      {!compact && <div className="stock-column-labels"><span>{copy.stock}</span><span>{copy.quoteTime}</span><span>{copy.price} / {copy.change}</span><span className="sr-only">{dictionary.watchlist.table.action}</span></div>}
+      <ul className={compact ? "compact-stock-grid" : "daily-stock-list"}>{visible.map((stock) => {
         const quote = data.quotes[stock.symbol];
+        const identity = <><StockLogo logo={logos[stock.symbol]} /><span className="stock-name skeleton-text"><strong>{stock.symbol}</strong><small>{stock.company}</small></span></>;
+        const loading = data.loading || !data.checkedAt && !data.error && !data.offline;
+        if (compact) return <li key={stock.symbol} className="stock-tile">
+          <StockLink href={`/stocks/${encodeURIComponent(stock.symbol)}`} className="stock-tile-link"><span className="stock-identity">{identity}</span><QuoteValue quote={quote} loading={loading} /></StockLink>
+          <WatchlistButton symbol={stock.symbol} company={stock.company} isInWatchlist={stock.followed} type="icon" />
+        </li>;
         return <li key={stock.symbol} className="daily-stock-row">
-          <StockLink href={`/stocks/${encodeURIComponent(stock.symbol)}`} className="stock-identity"><span className="stock-monogram" aria-hidden="true">{stock.symbol.slice(0, 2)}</span><span className="stock-name skeleton-text"><strong>{stock.symbol}</strong><small>{stock.company}</small></span></StockLink>
+          <StockLink href={`/stocks/${encodeURIComponent(stock.symbol)}`} className="stock-identity">{identity}</StockLink>
           <span className="stock-quote-time skeleton-text">{quote?.quoteTime ? new Date(quote.quoteTime).toLocaleString(locale === "th" ? "th-TH" : "en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "--"}</span>
-          <StockLink href={`/stocks/${encodeURIComponent(stock.symbol)}`} aria-label={`${stock.symbol} ${copy.price}`}><QuoteValue quote={quote} loading={data.loading || !data.checkedAt && !data.error && !data.offline} /></StockLink>
+          <StockLink href={`/stocks/${encodeURIComponent(stock.symbol)}`} aria-label={`${stock.symbol} ${copy.price}`}><QuoteValue quote={quote} loading={loading} /></StockLink>
           <WatchlistButton symbol={stock.symbol} company={stock.company} isInWatchlist={stock.followed} type="icon" showTrashIcon={!compact} />
         </li>;
       })}</ul>

@@ -22,6 +22,7 @@ type FinnhubCompanyProfile = {
   name?: string;
   ticker?: string;
   exchange?: string;
+  logo?: string;
 };
 
 export const getStockProfile = cache(async (symbol: string): Promise<FinnhubCompanyProfile | null> => {

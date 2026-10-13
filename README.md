@@ -8,7 +8,8 @@ StockMarket is a mobile-first daily companion for US stocks. Check your watchlis
 
 - Opens on **Today**: followed stocks (or popular stocks for a new account), latest daily digest, and a market chart/heatmap.
 - Refreshes visible stock prices every 60 seconds while the app is online and visible, with manual refresh and explicit unavailable/stale states. Quotes come from Finnhub and are not guaranteed real-time.
-- Uses a mobile bottom navigation and compact stock rows, with a wider desktop layout and 20-stock watchlist pages.
+- Uses a desktop sidebar, mobile bottom navigation, stock tiles on Today, and 20-stock watchlist pages with compact rows.
+- Shows real company logos from Finnhub in stock tiles, watchlist rows, search, and stock details. Logo lookup runs separately from quotes/search results; missing images use a company icon, never a made-up brand or ticker monogram.
 - Searches US stocks through Finnhub without waiting for quote/profile checks on every result. TradingView symbols are resolved when opening a stock's detail page.
 - Provides stock detail pages with a candle/line chart switch and company, financial, and technical widgets loaded on demand.
 - Saves a per-user watchlist in MongoDB and displays USD quotes, daily changes, and provider timestamps. Detailed financials remain available on the stock page.
@@ -136,6 +137,7 @@ iPhone 17 startup images cover portrait and landscape at 402 x 874 CSS pixels / 
 - Search and installation dialogs load when opened. Market widgets start when scrolled into view; stock analysis tabs load on demand. TradingView resolution runs separately from the stock header, with an 8-second external-request timeout.
 - Main navigation keeps Next.js prefetching. Stock pages prefetch on hover, focus, or touch, not for every offscreen row. Server-side reads/prefetches never queue news generation.
 - Watchlist writes validate symbols and company names, add atomically, and invalidate Today, watchlist, and the affected stock page. The UI retains optimistic updates and rolls back failed writes.
+- `POST /api/company-logos` validates a session and 1-20 symbols, reads the existing one-hour company-profile cache in batches of four, and returns only approved Finnhub CDN image URLs. It never delays the initial stock rows or quote refresh, and private API responses are not cached by the service worker.
 - Language transitions mask the existing content in place rather than replacing the entire screen. The header, bottom navigation, chart dimensions, and scroll position are retained; initial-load skeletons use the same row and section geometry.
 
 ## Production and Verification

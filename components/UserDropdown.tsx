@@ -71,7 +71,7 @@ const UserDropdown = ({ user }: { user: User }) => {
         <LogOut className="h-4 w-4 mr-2" /> {dictionary.userMenu.logout}
       </DropdownMenuItem>
       <DropdownMenuSeparator className="hidden sm:block bg-gray-600" />
-      <div className="px-2 py-2 md:hidden">
+      <div className="px-2 py-2 lg:hidden">
         <LanguageToggle className="w-full justify-center" />
       </div>
       <div className="px-2 py-2"><InstallAppButton /></div>
