@@ -42,6 +42,7 @@ async function fixture() {
   let sequence = 123450;
   const create = () => betterAuth({
     ...config, logger: { level: "error" }, database: memoryAdapter(db),
+    advanced: { ...config.advanced, disableOriginCheck: false, disableCSRFCheck: false },
     plugins: [emailOTP({ ...otpOptions, generateOTP: () => String(++sequence) })],
   });
   const auth = create();
@@ -193,4 +194,17 @@ test("resending rotates old codes and API rate limits persist across auth instan
   assert.equal(blocked.status, 429);
   assert.ok(Number(blocked.response.headers.get("X-Retry-After")) > 0);
   assert.equal(f.sent.length, 3);
+});
+
+test("reset endpoints reject cross-site requests carrying browser cookies without changing credentials", async () => {
+  const f = await fixture();
+  for (const path of ["email-otp/request-password-reset", "email-otp/reset-password"]) {
+    const response = await f.auth.handler(new Request(`https://stocks.example/api/auth/${path}`, {
+      method: "POST", headers: { "content-type": "application/json", origin: "https://untrusted.example", cookie: "stockmarket-locale=en", "x-forwarded-for": "203.0.113.90" },
+      body: JSON.stringify({ email: "owner@example.com", otp: "123456", password: "untrusted-password" }),
+    }));
+    assert.equal(response.status, 403);
+  }
+  assert.equal(f.sent.length, 0);
+  assert.equal((await f.call("sign-in/email", { email: "owner@example.com", password: "old-test-password" })).status, 200);
 });
