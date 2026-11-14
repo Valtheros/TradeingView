@@ -9,6 +9,7 @@ import React, { useState } from 'react';
 import { toast } from 'sonner';
 import { interpolate } from '@/lib/i18n';
 import { useLanguage } from './LanguageProvider';
+import { useAppAccess } from './AppAccessProvider';
 
 const WatchlistButton = ({
   symbol,
@@ -20,6 +21,7 @@ const WatchlistButton = ({
 }: WatchlistButtonProps) => {
   const { dictionary } = useLanguage();
   const copy = dictionary.watchlist;
+  const { user, requestSignIn } = useAppAccess();
   const [added, setAdded] = useState<boolean>(!!isInWatchlist);
   const [pending, setPending] = useState(false);
 
@@ -46,7 +48,8 @@ const WatchlistButton = ({
       return true;
     }
 
-    toast.error(result.message || copy.updateFailed);
+    if (result.code === 'AUTH_REQUIRED') requestSignIn(`/stocks/${encodeURIComponent(symbol)}`);
+    else toast.error(copy.updateFailed);
     return false;
   };
 
@@ -54,6 +57,7 @@ const WatchlistButton = ({
     e.stopPropagation();
     e.preventDefault();
     if (pending) return;
+    if (!user) { requestSignIn(`/stocks/${encodeURIComponent(symbol)}`); return; }
 
     const previous = added;
     const nextAdded = !added;

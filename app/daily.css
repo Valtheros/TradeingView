@@ -11,6 +11,11 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .brand-link img { width: 156px; height: auto; }
 .header-controls { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: auto; padding-bottom: env(safe-area-inset-bottom); }
 .header-controls > button { min-width: 44px; min-height: 44px; }
+.guest-controls { display: flex; align-items: center; gap: 8px; }
+.guest-login { flex: 1; white-space: nowrap; }
+.access-dialog { background: #18191b; border-color: #343638; gap: 16px; }
+.access-dialog [data-slot=dialog-title] { padding-right: 24px; line-height: 1.5; }
+.access-dialog [data-slot=dialog-description] { line-height: 1.8; }
 .desktop-nav { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
 .desktop-nav a, .nav-search { min-height: 46px; display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 12px; color: #a2a6ab; font-size: 14px; font-weight: 500; border-radius: 6px; }
 .desktop-nav a[aria-current], .desktop-nav a:hover, .nav-search:hover { color: #f4d16a; }

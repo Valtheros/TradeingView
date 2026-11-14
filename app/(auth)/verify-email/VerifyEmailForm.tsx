@@ -20,6 +20,7 @@ import { useRouter } from "next/navigation";
 import { useState, useSyncExternalStore } from "react";
 import { toast } from "sonner";
 import { useLanguage } from "@/components/LanguageProvider";
+import { safeReturnTo } from "@/lib/auth-navigation";
 
 const remainingCooldown = () => Math.max(0, Math.ceil((Number(localStorage.getItem("resendOtpExpiry")) - Date.now()) / 1000)) || 0;
 const subscribeCooldown = (callback: () => void) => {
@@ -29,7 +30,7 @@ const subscribeCooldown = (callback: () => void) => {
   return () => { clearInterval(timer); window.removeEventListener("storage", callback); window.removeEventListener("otp-cooldown", callback); };
 };
 
-export default function VerifyEmailForm() {
+export default function VerifyEmailForm({ returnTo }: { returnTo: string }) {
   const { dictionary } = useLanguage();
   const copy = dictionary.verifyEmail;
   const [otp, setOtp] = useState("");
@@ -47,7 +48,7 @@ export default function VerifyEmailForm() {
       const result = await verifyEmailWithOtp(otp);
       if (result.success) {
         toast.success(copy.success);
-        router.push("/");
+        router.replace(safeReturnTo(returnTo));
       } else {
         toast.error(result.error || copy.failed);
       }

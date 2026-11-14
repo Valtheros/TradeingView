@@ -2,27 +2,27 @@ import Header from "@/components/Header";
 import { getCurrentSession } from "@/lib/better-auth/session";
 import { Suspense } from "react";
 import AppBootSkeleton from "@/components/AppBootSkeleton";
-import { redirect } from "next/navigation";
 import NavItems from "@/components/NavItems";
 import LanguageSurface from "@/components/LanguageSurface";
+import { AppAccessProvider } from "@/components/AppAccessProvider";
+import { SearchProvider } from "@/components/SearchCommand";
 
-async function AuthenticatedShell({ children }: { children: React.ReactNode }) {
+async function AppShell({ children }: { children: React.ReactNode }) {
   const session = await getCurrentSession();
-  if(!session?.user) redirect('/sign-in');
-  const user = {
+  const user = session?.user ? {
     id: session.user.id,
     name: session.user.name,
     email: session.user.email,
-  }
+  } : null;
   return (
-    <div className="app-shell">
+    <AppAccessProvider user={user} key={user?.id || "guest"}><SearchProvider><div className="app-shell">
       <Header user={user} />
       <main className="app-content"><LanguageSurface>{children}</LanguageSurface></main>
       <NavItems mobile />
-    </div>
+    </div></SearchProvider></AppAccessProvider>
   );
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  return <Suspense fallback={<AppBootSkeleton />}><AuthenticatedShell>{children}</AuthenticatedShell></Suspense>;
+  return <Suspense fallback={<AppBootSkeleton />}><AppShell>{children}</AppShell></Suspense>;
 }

@@ -1,4 +1,5 @@
 import { dailyCopy } from "./daily-copy";
+import { guestCopy } from "./guest-copy";
 
 export const LOCALE_COOKIE = "stockmarket-locale";
 export const LOCALES = ["en", "th"] as const;
@@ -11,6 +12,7 @@ export const isLocale = (value: unknown): value is Locale =>
 
 export const dictionaries = {
   en: {
+    guest: guestCopy.en,
     daily: dailyCopy.en,
     common: {
       appName: "StockMarket",
@@ -212,6 +214,7 @@ export const dictionaries = {
     },
   },
   th: {
+    guest: guestCopy.th,
     daily: dailyCopy.th,
     common: {
       appName: "StockMarket",

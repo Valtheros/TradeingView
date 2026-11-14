@@ -9,7 +9,6 @@ import "./daily.css";
 import { LanguageProvider } from "@/components/LanguageProvider";
 import { Toaster } from "@/components/ui/sonner";
 import { getServerLocale } from "@/lib/i18n-server";
-import { SearchProvider } from "@/components/SearchCommand";
 import { PwaProvider } from "@/components/PwaProvider";
 
 const geistSans = Geist({
@@ -56,7 +55,7 @@ async function RootLayoutContent({ children }: { children: React.ReactNode }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <LanguageProvider initialLocale={locale}>
-          <PwaProvider><SearchProvider>{children}</SearchProvider></PwaProvider>
+          <PwaProvider>{children}</PwaProvider>
           <Toaster />
         </LanguageProvider>
       </body>

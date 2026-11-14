@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSessionCookie } from "better-auth/cookies";
+import { authHref } from "./lib/auth-navigation";
 
 export async function proxy(request: NextRequest) {
 const sessionCookie = getSessionCookie(request);
 
  // Check cookie presence - prevents obviously unauthorized users
   if (!sessionCookie) {
-    return NextResponse.redirect(new URL('/sign-in', request.url));
+    return NextResponse.redirect(new URL(authHref('/sign-in', request.nextUrl.pathname), request.url));
   }
 
   return NextResponse.next();
@@ -14,6 +15,7 @@ const sessionCookie = getSessionCookie(request);
 
 export const config = {
   matcher: [
-    '/((?!api|_next/static|_next/image|favicon.ico|manifest.webmanifest|sw.js|offline.html|sign-in|sign-up|forgot-password|assets|verify-email).*)',
+    '/watchlist/:path*',
+    '/news/:path*',
   ],
 };
