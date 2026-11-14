@@ -5,9 +5,10 @@ import { summaryPreview } from "@/lib/sanitize";
 import { getRecentNewsSummaries } from "./saveusernews.action";
 import { inngest } from "@/lib/inngest/client";
 import { isLocale, type Locale } from "@/lib/i18n";
+import { digestIsCurrent, expectedDigestDate } from '@/lib/news-policy';
 
 export type Digest = { id: string; date: string; html: string; locale: Locale; updatedAt: string | null };
-export type DigestState = { summaries: Digest[]; pending: boolean; fallback: boolean };
+export type DigestState = { summaries: Digest[]; pending: boolean; fallback: boolean; stale: boolean };
 
 async function currentUser() {
   const session = await getCurrentSession();
@@ -21,10 +22,11 @@ export async function getDigestState(locale: Locale, view: "full" | "preview" = 
   const user = await currentUser();
   const limit = view === "preview" ? 1 : 5;
   let summaries = await getRecentNewsSummaries(user.id, limit, locale);
-  const pending = summaries.length === 0;
-  if (pending && locale === "th") summaries = await getRecentNewsSummaries(user.id, limit, "en");
+  const missing = summaries.length === 0;
+  const pending = !digestIsCurrent(summaries[0]);
+  if (missing && locale === "th") summaries = await getRecentNewsSummaries(user.id, limit, "en");
   return {
-    pending, fallback: pending && summaries.length > 0,
+    pending, fallback: missing && summaries.length > 0, stale: !missing && pending,
     summaries: summaries.map((summary) => ({
       id: summary.id, date: summary.readableDate,
       html: view === "preview" ? summaryPreview(summary.newsContent, summary.locale || "en") : summary.newsContent,
@@ -38,10 +40,10 @@ export async function queueDigest(locale: Locale) {
   if (!isLocale(locale)) throw new Error("Invalid locale");
   const user = await currentUser();
   const existing = await getRecentNewsSummaries(user.id, 1, locale);
-  if (existing.length) return;
+  if (digestIsCurrent(existing[0])) return;
   // Inngest deduplicates repeated requests across page visits and server instances.
   await inngest.send({
-    id: `digest-${user.id}-${locale}-${Math.floor(Date.now() / 900_000)}`,
+    id: `digest-${user.id}-${locale}-${expectedDigestDate()}-${Math.floor(Date.now() / 900_000)}`,
     name: "app/news.daily.fetched", data: { userId: user.id, locales: [locale] },
   });
 }

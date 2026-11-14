@@ -42,7 +42,7 @@ export default function DigestPanel({ initial, preview = false }: { initial: Dig
   return <section className={preview ? "digest-section" : "news-section"}>
     <div className="section-heading"><h2 className="skeleton-text"><Newspaper size={20} />{preview ? copy.latestDigest : copy.news}</h2></div>
     {state.pending && <div className="digest-status" role="status">
-      <p>{error ? copy.newsError : state.fallback ? copy.fallback : stopped ? copy.waitingLater : copy.waiting}</p>
+      <p>{error ? copy.newsError : stopped ? copy.waitingLater : state.fallback ? copy.fallback : state.stale ? copy.staleNews : copy.waiting}</p>
       {(error || stopped) && <button className="text-action" onClick={() => { setStopped(false); setError(false); setAttempt((n) => n + 1); }}><RefreshCw size={16} />{copy.checkNews}</button>}
     </div>}
     {latest ? <article className="digest-article">

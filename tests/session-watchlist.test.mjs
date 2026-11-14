@@ -121,6 +121,8 @@ test("news storage propagates database failures instead of returning an empty ed
     "@/database/mongoose": { connecttoDatabase: async () => { throw new Error("Database unavailable"); } },
     "@/lib/sanitize": { sanitizeSummaryHtml: html => html },
     "@/lib/i18n": { DEFAULT_LOCALE: "en", isLocale: value => value === "en" || value === "th" },
+    '../inngest/environment': { newsCollection: 'news_summaries' },
+    '../news-policy': { isDigestDate: value => /^\d{4}-\d{2}-\d{2}$/.test(value) },
   });
   await assert.rejects(api.getRecentNewsSummaries("alice", 1, "th"), /Failed to read news summaries/);
 });

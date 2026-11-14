@@ -1,4 +1,4 @@
-"use server";
+import 'server-only';
 
 import { connecttoDatabase } from "@/database/mongoose";
 import { inngest } from "../inngest/client";
@@ -48,7 +48,7 @@ export const getAllUserForNews = async (userId?: string) => {
       }));
   } catch (error) {
     console.error("Error fetching users for news", error);
-    return [];
+    throw new Error('Failed to load news users');
   }
 };
 
@@ -60,6 +60,6 @@ export const Fetchnews = async (userId?: string, locales?: Locale[]) => {
     });
   } catch (error) {
     console.log("Fetchnews failed", error);
-    return { success: false, error: "Fetchnews failed" };
+    throw new Error('Failed to queue initial news');
   }
 };

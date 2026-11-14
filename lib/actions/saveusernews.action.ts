@@ -4,8 +4,10 @@ import { connecttoDatabase } from "@/database/mongoose";
 import { sanitizeSummaryHtml } from "@/lib/sanitize";
 import { DEFAULT_LOCALE, type Locale, isLocale } from "@/lib/i18n";
 import type { Filter, ObjectId } from "mongodb";
+import { newsCollection } from '../inngest/environment';
+import { isDigestDate } from '../news-policy';
 
-const COLLECTION_NAME = "news_summaries";
+const COLLECTION_NAME = newsCollection;
 
 type NewsSummaryDocument = {
   _id?: ObjectId;
@@ -53,7 +55,9 @@ export const saveUserNewsSummary = async ({
   dateISO,
   newsContent,
 }: SaveSummaryParams) => {
-  if (!userId || !email || !newsContent) return false;
+  if (!userId || !email || !newsContent.trim() || !isLocale(locale) || !isDigestDate(dateISO)) throw new Error('Invalid news summary');
+  const sanitized = sanitizeSummaryHtml(newsContent);
+  if (!sanitized.trim()) throw new Error('News summary is empty after sanitization');
   const summaryLocale = isLocale(locale) ? locale : DEFAULT_LOCALE;
 
   try {
@@ -63,7 +67,7 @@ export const saveUserNewsSummary = async ({
 
     const now = new Date();
     await db.collection<NewsSummaryDocument>(COLLECTION_NAME).updateOne(
-      getSummaryFilter(userId, summaryLocale),
+      { ...getSummaryFilter(userId, summaryLocale), dateISO },
       {
         $set: {
           userId,
@@ -72,7 +76,7 @@ export const saveUserNewsSummary = async ({
           locale: summaryLocale,
           readableDate,
           dateISO,
-          newsContent: sanitizeSummaryHtml(newsContent),
+          newsContent: sanitized,
         },
         $setOnInsert: { createdAt: now },
         $currentDate: { updatedAt: true },
@@ -83,7 +87,7 @@ export const saveUserNewsSummary = async ({
     return true;
   } catch (err) {
     console.error("saveUserNewsSummary error:", err);
-    return false;
+    throw new Error('Failed to save news summary');
   }
 };
 

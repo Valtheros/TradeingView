@@ -5,7 +5,6 @@ import Inputfield from "@/components/forms/Inputfield";
 import Selectfield from "@/components/forms/Selectfield";
 import { Button } from "@/components/ui/button";
 import { signUpWithEmail } from "@/lib/actions/auth.actions";
-import { Fetchnews } from "@/lib/actions/user.action";
 import {
   INVESTMENT_GOALS,
   PREFERRED_INDUSTRIES,
@@ -54,7 +53,6 @@ const Signup = () => {
       const result = await signUpWithEmail(data);
       if (result.success) {
         if (result.data?.user.id) {
-          await Fetchnews(result.data.user.id);
         }
         // localStorage.setItem("userEmail", data.email); // Removed: Security vulnerability
         // OTP is sent automatically or handled by server

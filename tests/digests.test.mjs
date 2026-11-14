@@ -12,7 +12,9 @@ runInNewContext(ts.transpileModule(sanitizeSource, { compilerOptions: { module: 
 
 const source = readFileSync(new URL("../lib/actions/digest.actions.ts", import.meta.url), "utf8");
 const compiled = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 } }).outputText;
-const english = { id: "edition-en", readableDate: "October 2, 2026", newsContent: "<p>Saved news</p>", updatedAt: new Date("2026-10-02T20:00:00Z") };
+const policy = {};
+runInNewContext(ts.transpileModule(readFileSync(new URL('../lib/news-policy.ts', import.meta.url), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, { exports: policy, Date });
+const english = { id: "edition-en", dateISO: policy.expectedDigestDate(), readableDate: "Saved edition date", newsContent: "<p>Saved news</p>", updatedAt: new Date() };
 
 function setup({ signedIn = true, en = [english], th = [], databaseError = false } = {}) {
   const reads = [];
@@ -24,6 +26,7 @@ function setup({ signedIn = true, en = [english], th = [], databaseError = false
     "./saveusernews.action": { getRecentNewsSummaries: async (user, limit, locale) => { if (databaseError) throw new Error("Database unavailable"); reads.push({ user, limit, locale }); return (locale === "th" ? th : en).slice(0, limit); } },
     "@/lib/inngest/client": { inngest: { send: async event => { events.push(event); } } },
     "@/lib/i18n": { isLocale: locale => locale === "en" || locale === "th" },
+    "@/lib/news-policy": policy,
   };
   runInNewContext(compiled, { exports, Date, require: name => {
     if (!(name in modules)) throw new Error(`Unexpected dependency ${name}`);
@@ -83,9 +86,24 @@ test("new accounts stay pending and queue only their own requested language with
   assert.equal(state.fallback, false);
   assert.equal(state.summaries.length, 0);
   await api.queueDigest("th");
-  assert.match(api.events[0].id, /^digest-current-user-th-\d+$/);
+  assert.match(api.events[0].id, /^digest-current-user-th-\d{4}-\d{2}-\d{2}-\d+$/);
   assert.equal(api.events[0].data.userId, "current-user");
   assert.equal(api.events[0].data.locales.join(","), "th");
+});
+
+test('old news remains readable while a deduplicated refresh is queued for only the current user', async () => {
+  const old = { ...english, dateISO: '2020-01-01' };
+  const api = setup({ th: [{ ...old, locale: 'th' }] });
+  const state = await api.getDigestState('th');
+  assert.equal(state.pending, true);
+  assert.equal(state.stale, true);
+  assert.equal(state.fallback, false);
+  assert.equal(state.summaries[0].html, old.newsContent);
+  assert.equal(api.events.length, 0);
+  await api.queueDigest('th');
+  assert.equal(api.events.length, 1);
+  assert.equal(api.events[0].data.userId, 'current-user');
+  assert.deepEqual(Array.from(api.events[0].data.locales), ['th']);
 });
 
 test("digest reads and generation reject invalid locales and unauthenticated users", async () => {

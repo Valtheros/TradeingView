@@ -30,7 +30,7 @@ StockMarket is a mobile-first daily companion for US stocks. Check your watchlis
 - Finnhub API for stock search, quotes, profiles, metrics, and news
 - TradingView embedded widgets for charts and market data
 - Inngest for background jobs and scheduled news summaries
-- Gemini 3.5 Flash-Lite (`gemini-3.5-flash-lite`) for AI-generated welcome emails and news summaries
+- Gemini 3.1 Flash-Lite (`gemini-3.1-flash-lite`) for AI-generated welcome emails and news summaries
 - Nodemailer for OTP and welcome emails
 
 ## Main Pages
@@ -79,9 +79,9 @@ cp .env.example .env
 | `BETTER_AUTH_URL` | Base URL for auth callbacks, usually `http://localhost:3000` locally. |
 | `TRUSTED_ORIGINS` | Comma-separated list of allowed origins for Better Auth. |
 | `FINNHUB_API_KEY` | Server-side Finnhub API key for stock data and market news. |
-| `INNGEST_EVENT_KEY` | Inngest event key. |
-| `INNGEST_SIGNING_KEY` | Inngest signing key for verifying requests. |
-| `GEMINI_API_KEY` | Gemini API key used by Inngest AI steps. |
+| `INNGEST_EVENT_KEY` | Production event key for Production; existing Branch Environments event key for Preview. Never share Production keys with Preview. |
+| `INNGEST_SIGNING_KEY` | Signing key from the matching Inngest environment. Preview uses the shared branch signing key. |
+| `GEMINI_API_KEY` | Server-only Gemini API key used inside durable Inngest steps. |
 | `NODEMAILER_EMAIL` | Email address used to send OTP and welcome emails. |
 | `NODEMAILER_PASSWORD` | Password or app password for the Nodemailer account. |
 
@@ -127,8 +127,13 @@ iPhone 17 startup images cover portrait and landscape at 402 x 874 CSS pixels / 
 - `POST /api/quotes` requires a valid session and JSON `{ "symbols": ["AAPL", "MSFT"] }`. It accepts 1-20 validated symbols, normalizes/deduplicates them, and returns nullable quote values with provider/fetch timestamps and availability status.
 - Quote requests share a bounded 60-second server-process cache, deduplicate concurrent symbols, and run at most four upstream requests concurrently per process. Upstream rate limits delay retries. A multi-instance deployment has a separate cache/limit per instance.
 - The browser refreshes only displayed symbols and pauses while hidden or offline. It retains previously fetched values with a warning if an update fails.
-- Inngest still generates both digest languages on signup and the existing daily schedule. Missing digests can be queued with a deduplicated event. The UI checks every 15 seconds for up to two minutes, then offers another check.
-- Existing English documents without a locale are still supported. No data migration is needed. Existing digest storage keeps the latest document per user/language; this release does not backfill historical editions.
+- Inngest dispatches one worker per user/language on signup and at **19:00 Asia/Bangkok daily**. The dispatcher reports editions queued, not editions saved. Each worker saves its own completed result immediately; an English failure does not block the Thai worker or another user.
+- Missing or stale digests queue a deduplicated catch-up job only after the client mounts, never from server rendering/prefetch. Freshness follows the last scheduled 19:00 Bangkok edition. Saved news stays readable with its original date while the UI checks every 15 seconds for up to two minutes, then offers another check.
+- Workers use one shared AI concurrency slot across environments, start at most four editions per minute, and allow three retries. Transient 429/5xx/network failures back off for at least one minute and honor provider retry delays. Explicit daily-quota/zero-quota failures stop retrying; they are visible as failed runs, not successful news. A model change cannot guarantee that provider capacity or quota errors disappear.
+- Empty, blocked or truncated AI responses never replace saved news. Database/user/provider failures propagate. A worker reports `saved` only after persistence succeeds. Completed workers can report `already-current` when the requested edition is already available.
+- Existing English documents without a locale remain supported. New writes are keyed by user/language/date, preserving earlier editions instead of replacing the previous day. No migration or historical backfill is performed.
+- Preview sets the Inngest environment to `VERCEL_GIT_COMMIT_REF`, disables the daily cron and welcome email, and stores generated news in a deterministic `news_summaries_preview_<branch hash>` collection. Production keeps `news_summaries`. Auth/watchlist data still use the configured MongoDB database; this is news-output isolation, not a separate staging database.
+- On Vercel, set Production and Preview Inngest keys to their respective existing environments before deploying. Keep System Environment Variables enabled. Do not globally set `INNGEST_ENV=production` or a production `INNGEST_SERVE_ORIGIN` for Preview. After deployment, confirm the Production app's commit ref is `main`, and the preview app appears under its branch environment. See [Inngest branch environments](https://www.inngest.com/docs/platform-and-operations/environments-and-branch-deploys).
 
 ## Startup and Loading
 

@@ -1,192 +1,88 @@
-import { getNews } from "../actions/finnhub.actions";
-import { saveUserNewsSummary } from "../actions/saveusernews.action";
-import { getAllUserForNews } from "../actions/user.action";
-import { getWatchlistSymbolsByEmail } from "../watchlist-server";
-import { sendWelcomeEmail } from "../nodemailer";
-import { getFormattedTodayDateForLocale, getTodayString } from "../utils";
-import { isLocale } from "../i18n";
-import { inngest } from "./client";
-import {
-  buildNewsSummaryPrompt,
-  PERSONALIZED_WELCOME_EMAIL_PROMPT,
-} from "./prompts";
+import { NonRetriableError } from 'inngest';
+import { ObjectId } from 'mongodb';
+import { getNews } from '../actions/finnhub.actions';
+import { getRecentNewsSummaries, saveUserNewsSummary } from '../actions/saveusernews.action';
+import { getAllUserForNews } from '../actions/user.action';
+import { getWatchlistSymbolsByEmail } from '../watchlist-server';
+import { sendWelcomeEmail } from '../nodemailer';
+import { isLocale, type Locale } from '../i18n';
+import { digestIsCurrent, expectedDigestDate, isDigestDate } from '../news-policy';
+import { inngest } from './client';
+import { isPreview } from './environment';
+import { generateGeminiText, NEWS_MODEL } from './gemini';
+import { buildNewsSummaryPrompt, PERSONALIZED_WELCOME_EMAIL_PROMPT } from './prompts';
+
+const aiConcurrency = { limit: 1, key: '"gemini-text"', scope: 'account' as const };
 
 export const sendSignUpEmail = inngest.createFunction(
-  { id: "sign-up-email" },
-  { event: "app/user.created" },
+  { id: 'sign-up-email', retries: 3, concurrency: aiConcurrency, throttle: { limit: 4, period: '1m' } },
+  { event: 'app/user.created' },
   async ({ event, step }) => {
-    const userProfile = `
-         - Country: ${event.data.country}
-         - Investment Goals: ${event.data.investmentGoals}
-         - Risk Tolerance: ${event.data.riskTolerance}
-         - Preferred Industry: ${event.data.preferredIndustry}
-        `;
-
-    const prompt = PERSONALIZED_WELCOME_EMAIL_PROMPT.replace(
-      "{{userProfile}}",
-      userProfile
-    );
-
-    const response = await step.ai.infer("generate-welcome-intro", {
-      model: step.ai.models.gemini({
-        model: "gemini-3.5-flash-lite",
-      }),
-      body: {
-        contents: [
-          {
-            role: "user",
-            parts: [
-              {
-                text: prompt,
-              },
-            ],
-          },
-        ],
-      },
-    });
-
-    await step.run("send-welcome-email", async () => {
-      const part = response.candidates?.[0]?.content?.parts?.[0];
-      const introText =
-        (part && "text" in part ? part.text : null) ||
-        "Thanks for joining StockMarket!. You now have the tool to make a smart investment decision.";
-
-      const {
-        data: { email, name },
-      } = event;
-      return await sendWelcomeEmail({
-        email,
-        name,
-        intro: introText,
-      });
-    });
-
-    return {
-      success: true,
-      message: "Welcome email sent successfully",
-    };
-  }
+    if (isPreview) return { status: 'skipped', reason: 'Preview never sends welcome emails' };
+    const userProfile = `Country: ${event.data.country}\nInvestment Goals: ${event.data.investmentGoals}\nRisk Tolerance: ${event.data.riskTolerance}\nPreferred Industry: ${event.data.preferredIndustry}`;
+    const intro = await step.run('generate-welcome-intro', () => generateGeminiText(
+      PERSONALIZED_WELCOME_EMAIL_PROMPT.replace('{{userProfile}}', userProfile), 1024,
+    ));
+    await step.run('send-welcome-email', () => sendWelcomeEmail({ email: event.data.email, name: event.data.name, intro }));
+    return { success: true, message: 'Welcome email sent successfully' };
+  },
 );
 
 export const DailyNewsSummary = inngest.createFunction(
-  { id: "daily-news-summary" },
-  [{ event: "app/news.daily.fetched" }, { cron: "0 12 * * *" }],
+  { id: 'daily-news-summary', retries: 3 },
+  [{ event: 'app/news.daily.fetched' }, ...(!isPreview ? [{ cron: 'TZ=Asia/Bangkok 0 19 * * *' }] : [])],
   async ({ event, step }) => {
-    // Step #1: Get all users for news delivery
-    const users = await step.run("get-all-users", async () =>
-      getAllUserForNews(event.data.userId)
-    );
+    const userId = event.data.userId;
+    if (userId !== undefined && (typeof userId !== 'string' || !ObjectId.isValid(userId))) throw new NonRetriableError('Invalid news user ID');
+    const users = await step.run('get-all-users', () => getAllUserForNews(userId));
+    const requestedLocales: unknown[] = Array.isArray(event.data.locales) ? event.data.locales : ['en', 'th'];
+    const locales: Locale[] = [...new Set(requestedLocales.filter(isLocale))];
+    if (!locales.length) throw new NonRetriableError('No valid news locales');
+    const dateISO = expectedDigestDate(new Date(event.ts || Date.now()));
+    const events = users.flatMap(user => locales.map(locale => ({
+      id: `news-${event.id}-${user.id}-${locale}-${dateISO}`,
+      name: 'app/news.summary.requested', data: { userId: user.id, locale, dateISO },
+    })));
+    if (events.length) await step.sendEvent('dispatch-news-editions', events);
+    return { status: 'dispatched', editions: events.length, dateISO };
+  },
+);
 
-    if (!users || users.length === 0)
-      return {
-        success: false,
-        message: "No users found for news summary",
-      };
-
-    // Step #2: For each user, get watchlist symbols -> fetch news (fallback to general)
-    const results = await step.run("fetch-user-news", async () => {
-      const perUser: Array<{
-        user: UserForNews;
-        articles: MarketNewsArticle[];
-      }> = [];
-      for (const user of users as UserForNews[]) {
-        try {
-          const symbols = await getWatchlistSymbolsByEmail(user.email);
-          let articles = await getNews(symbols);
-          // Enforce max 6 articles per user
-          articles = (articles || []).slice(0, 6);
-          // If still empty, fallback to general
-          if (!articles || articles.length === 0) {
-            articles = await getNews();
-            articles = (articles || []).slice(0, 6);
-          }
-          perUser.push({ user, articles });
-        } catch (e) {
-          console.error("daily-news: error preparing user news", user.email, e);
-          perUser.push({ user, articles: [] });
-        }
-      }
-      return perUser;
-    });
-
-    // Step #3: (placeholder) Summarize news via AI
-    const requestedLocales = Array.isArray(event.data.locales)
-      ? event.data.locales.filter(isLocale)
-      : [];
-    const summaryLocales =
-      requestedLocales.length > 0 ? requestedLocales : (["en", "th"] as const);
-    const userNewsSummaries: {
-      user: UserForNews;
-      locale: (typeof summaryLocales)[number];
-      readableDate: string;
-      newsContent: string | null;
-    }[] = [];
-    const dateISO = getTodayString();
-
-    for (const { user, articles } of results) {
-      for (const locale of summaryLocales) {
-        try {
-          const prompt = buildNewsSummaryPrompt(locale, articles);
-
-          const response = await step.ai.infer(
-            `summarize-news-${locale}-${user.email}`,
-            {
-              model: step.ai.models.gemini({ model: "gemini-3.5-flash-lite" }),
-              body: {
-                contents: [{ role: "user", parts: [{ text: prompt }] }],
-              },
-            }
-          );
-
-          const part = response.candidates?.[0]?.content?.parts?.[0];
-          const newsContent =
-            (part && "text" in part ? part.text : null) ||
-            (locale === "th" ? "ไม่มีข่าวตลาด" : "No market news.");
-
-          userNewsSummaries.push({
-            user,
-            locale,
-            readableDate: getFormattedTodayDateForLocale(locale),
-            newsContent,
-          });
-        } catch (e) {
-          console.error(
-            `Failed to summarize ${locale} news for : `,
-            user.email,
-            e
-          );
-          userNewsSummaries.push({
-            user,
-            locale,
-            readableDate: getFormattedTodayDateForLocale(locale),
-            newsContent: null,
-          });
-        }
-      }
+export const GenerateNewsSummary = inngest.createFunction(
+  {
+    id: 'generate-news-summary', retries: 3, concurrency: aiConcurrency,
+    throttle: { limit: 4, period: '1m' },
+    singleton: { key: 'event.data.userId + ":" + event.data.locale + ":" + event.data.dateISO', mode: 'skip' },
+  },
+  { event: 'app/news.summary.requested' },
+  async ({ event, step }) => {
+    const { userId, locale, dateISO } = event.data;
+    if (typeof userId !== 'string' || !ObjectId.isValid(userId) || !isLocale(locale) || !isDigestDate(dateISO)) {
+      throw new NonRetriableError('Invalid news edition');
     }
-    // Step #4: Persist summaries for in-app viewing
-    await step.run("save-news-summaries", async () => {
-      await Promise.all(
-        userNewsSummaries.map(async ({ user, locale, readableDate, newsContent }) => {
-          if (!newsContent) return false;
-
-          return await saveUserNewsSummary({
-            userId: user.id,
-            email: user.email,
-            name: user.name,
-            locale,
-            readableDate,
-            dateISO,
-            newsContent,
-          });
-        })
-      );
-      return {
-        success: true,
-        message: "Daily news summaries stored successfully",
-      };
+    const current = await step.run('check-saved-edition', () => getRecentNewsSummaries(userId, 1, locale));
+    if (digestIsCurrent(current[0], dateISO)) return { status: 'already-current', userId, locale, dateISO };
+    const user = await step.run('load-news-user', async () => {
+      const users = await getAllUserForNews(userId);
+      if (!users[0]) throw new NonRetriableError('News user no longer exists');
+      return users[0];
     });
-
-    return { success: true, message: "Update news success" };
-  }
+    const articles = await step.run('fetch-user-news', async () => {
+      const symbols = await getWatchlistSymbolsByEmail(user.email);
+      const articles = (await getNews(symbols)).slice(0, 6);
+      if (!articles.length) throw new Error('No source articles available; keeping the saved digest');
+      return articles;
+    });
+    const html = await step.run('generate-summary', () => generateGeminiText(buildNewsSummaryPrompt(locale, articles)));
+    await step.run('save-news-summary', async () => {
+      const saved = await saveUserNewsSummary({
+        userId: user.id, email: user.email, name: user.name, locale, dateISO, newsContent: html,
+        readableDate: new Date(`${dateISO}T12:00:00Z`).toLocaleDateString(locale === 'th' ? 'th-TH' : 'en-US', {
+          weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Bangkok',
+        }),
+      });
+      if (!saved) throw new Error('News summary was not saved');
+    });
+    return { status: 'saved', userId, locale, dateISO, model: NEWS_MODEL };
+  },
 );
