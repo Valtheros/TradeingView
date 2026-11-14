@@ -2,6 +2,17 @@
 
 StockMarket is a mobile-first daily companion for US stocks. Check your watchlist, read your market digest in English or Thai, explore charts, and add the app to your phone's home screen.
 
+## Explore Before Signing In
+
+- Guests can open Today and explore a fixed public catalog: **AAPL, MSFT, GOOGL, AMZN, TSLA, META, NVDA, NFLX, ORCL, CRM**. This is a curated list, not a live popularity ranking.
+- Public prices, company logos and charts render inside TradingView widgets, with their branding and attribution. No widget data is scraped or copied into native quote cards. Data may be delayed or unavailable for a symbol; see [TradingView data availability](https://www.tradingview.com/widget-docs/faq/data/).
+- Guest search filters this catalog locally by company name or symbol without a debounce or server request. It does not perform full-market Finnhub search or load Finnhub logo/quote hooks.
+- Following a stock, viewing a watchlist or reading a personal digest opens a sign-in prompt. Login, signup/email verification, and password recovery preserve an allowlisted internal `returnTo`. After signing in, confirm following the stock yourself; the app never executes a pending write from the URL.
+- A valid symbol outside the public list asks for sign-in without contacting a data provider. Invalid symbol formats return 404. Members retain the existing full search and personal screens.
+- Direct private routes still validate sessions. Quote/logo APIs, Finnhub search, watchlist writes and digest jobs remain protected. Guests do not read personal data, queue digests or connect to MongoDB when no session cookie is present.
+- Provider fetch helpers and background user/news functions are `server-only`, not browser-callable Server Actions. Signup queues the new account's initial digest inside its server action using the ID returned by Better Auth, not a client-supplied user ID.
+- **Publishing rights remain a release prerequisite:** a personal Finnhub plan is not permission to distribute its data to other members. Confirm the necessary rights before accepting other users; keeping a login screen does not replace that approval. See [Finnhub terms](https://finnhub.io/terms-of-service).
+
 ![StockMarket](public/assets/icons/logo.svg)
 
 ## What It Does
@@ -37,9 +48,9 @@ StockMarket is a mobile-first daily companion for US stocks. Check your watchlis
 
 | Route | Description |
 | --- | --- |
-| `/` | Today: followed stocks, latest digest, and market overview. |
+| `/` | Public TradingView exploration for guests; followed stocks and latest digest for members. |
 | `/watchlist` | Authenticated watchlist with stock search and enriched market data. |
-| `/stocks/[symbol]` | Live-refreshing quote, switchable chart, and on-demand analysis. |
+| `/stocks/[symbol]` | Public-catalog widgets for guests; authenticated quotes and full stock access for members. |
 | `/news` | Latest daily digest and any previously stored digests, in the selected language. |
 | `/sign-in` | Sign in with email and password. |
 | `/forgot-password` | Request an email code and set a new password, in English or Thai. |
@@ -136,8 +147,8 @@ iPhone 17 startup images cover portrait and landscape at 402 x 874 CSS pixels / 
 - Server components share a session read using request-scoped `React.cache()`, not a shared user/session cache. Today loads stocks and news independently; failed reads have a retry state instead of being treated as missing news.
 - Today reads one short, markup-free digest preview. The news route still reads the complete sanitized HTML and any saved previous editions, with the original dates and language labels.
 - Search and installation dialogs load when opened. Market widgets start when scrolled into view; stock analysis tabs load on demand. TradingView resolution runs separately from the stock header, with an 8-second external-request timeout.
-- Main navigation keeps Next.js prefetching. Stock pages prefetch on hover, focus, or touch, not for every offscreen row. Server-side reads/prefetches never queue news generation.
-- Watchlist writes validate symbols and company names, add atomically, and invalidate Today, watchlist, and the affected stock page. The UI retains optimistic updates and rolls back failed writes.
+- Main navigation keeps Next.js prefetching except private links for guests. Stock pages prefetch on hover, focus, or touch, not for every offscreen row. Server-side reads/prefetches never queue news generation.
+- Watchlist writes validate symbols and company names, add atomically, and invalidate Today, watchlist, and the affected stock page. The UI retains optimistic updates, rolls back failed writes, and requests sign-in again on `AUTH_REQUIRED` without writing data.
 - `POST /api/company-logos` validates a session and 1-20 symbols, reads the existing one-hour company-profile cache in batches of four, and returns only approved Finnhub CDN image URLs. It never delays the initial stock rows or quote refresh, and private API responses are not cached by the service worker.
 - Language transitions mask the existing content in place rather than replacing the entire screen. The header, bottom navigation, chart dimensions, and scroll position are retained; initial-load skeletons use the same row and section geometry.
 

@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import { getAuth } from "../better-auth/auth";
 import { redirect } from "next/navigation";
 import { Watchlist } from "@/database/models/watchlist.model";
-import { getStocksDetails } from "./finnhub.actions";
+import { getStocksDetails } from "../finnhub/data";
 
 // Get user's watchlist with stock data
 export const getWatchlistWithData = async () => {

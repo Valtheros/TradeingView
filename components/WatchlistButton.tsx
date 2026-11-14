@@ -18,6 +18,7 @@ const WatchlistButton = ({
   showTrashIcon = false,
   type = 'button',
   onWatchlistChange,
+  onAuthRequired,
 }: WatchlistButtonProps) => {
   const { dictionary } = useLanguage();
   const copy = dictionary.watchlist;
@@ -48,7 +49,7 @@ const WatchlistButton = ({
       return true;
     }
 
-    if (result.code === 'AUTH_REQUIRED') requestSignIn(`/stocks/${encodeURIComponent(symbol)}`);
+    if (result.code === 'AUTH_REQUIRED') { onAuthRequired?.(); requestSignIn(`/stocks/${encodeURIComponent(symbol)}`); }
     else toast.error(copy.updateFailed);
     return false;
   };
@@ -57,7 +58,7 @@ const WatchlistButton = ({
     e.stopPropagation();
     e.preventDefault();
     if (pending) return;
-    if (!user) { requestSignIn(`/stocks/${encodeURIComponent(symbol)}`); return; }
+    if (!user) { onAuthRequired?.(); requestSignIn(`/stocks/${encodeURIComponent(symbol)}`); return; }
 
     const previous = added;
     const nextAdded = !added;

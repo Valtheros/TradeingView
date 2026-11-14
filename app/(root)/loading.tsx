@@ -1,2 +1,4 @@
 import PageSkeleton from "@/components/PageSkeleton";
-export default function Loading() { return <PageSkeleton />; }
+import { headers } from "next/headers";
+import { getSessionCookie } from "better-auth/cookies";
+export default async function Loading() { return <PageSkeleton guest={!getSessionCookie(await headers())} />; }

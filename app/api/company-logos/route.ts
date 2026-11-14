@@ -1,5 +1,5 @@
 import { getCurrentSession } from "@/lib/better-auth/session";
-import { getStockProfile } from "@/lib/actions/finnhub.actions";
+import { getStockProfile } from "@/lib/finnhub/data";
 import { handleLogoRequest } from "@/lib/company-logos";
 
 export async function POST(request: Request) {

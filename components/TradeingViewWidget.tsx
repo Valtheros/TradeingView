@@ -11,6 +11,7 @@ interface TradingViewWidgetProps {
   config: Record<string, unknown>;
   height?: number;
   classname?: string;
+  showAttribution?: boolean;
 }
 
 const TradingViewWidget = ({
@@ -19,6 +20,7 @@ const TradingViewWidget = ({
   config,
   height = 600,
   classname,
+  showAttribution = false,
 }: TradingViewWidgetProps) => {
   const { containerRef, failed, retry } = useTradingViewWidget(scriptUrl, config, height);
   const { dictionary } = useLanguage();
@@ -37,6 +39,7 @@ const TradingViewWidget = ({
         />
       </div>
       {failed && <div className="widget-error" role="status"><p>{dictionary.daily.marketUnavailable}</p><button className="action-button secondary" onClick={retry}><RefreshCw size={18} />{dictionary.daily.retry}</button></div>}
+      {showAttribution && <div className="tradingview-widget-copyright"><a href="https://www.tradingview.com/" target="_blank" rel="noopener noreferrer">TradingView</a></div>}
     </div>
   );
 };

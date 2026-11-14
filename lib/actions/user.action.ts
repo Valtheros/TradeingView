@@ -1,4 +1,4 @@
-"use server";
+import "server-only";
 
 import { connecttoDatabase } from "@/database/mongoose";
 import { inngest } from "../inngest/client";

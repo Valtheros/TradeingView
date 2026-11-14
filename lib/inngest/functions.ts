@@ -1,4 +1,4 @@
-import { getNews } from "../actions/finnhub.actions";
+import { getNews } from "../finnhub/data";
 import { saveUserNewsSummary } from "../actions/saveusernews.action";
 import { getAllUserForNews } from "../actions/user.action";
 import { getWatchlistSymbolsByEmail } from "../watchlist-server";

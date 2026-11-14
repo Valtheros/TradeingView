@@ -4,6 +4,7 @@ import { inngest } from "../inngest/client";
 import { headers, cookies } from "next/headers";
 import { connecttoDatabase } from "@/database/mongoose";
 import { checkRateLimit } from "@/database/models/rateLimit.model";
+import { Fetchnews } from "./user.action";
 
 type RequestHeaders = Awaited<ReturnType<typeof headers>>;
 type AuthApi = Awaited<ReturnType<typeof getAuth>>["api"];
@@ -73,6 +74,7 @@ export const signUpWithEmail = async ({
           preferredIndustry: preferredIndustry,
         },
       });
+      await Fetchnews(response.user.id);
     }
     return { success: true, data: response };
   } catch (error: unknown) {
