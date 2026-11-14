@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#101112">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="robots" content="noindex">
+  <title>StockMarket</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #151618; color: #f2f3f4; font: 14px system-ui, sans-serif; }
+    a { color: #e8ba40; text-decoration: none; min-height: 44px; display: inline-flex; align-items: center; }
+    header { position: sticky; top: 0; z-index: 1; height: calc(60px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) 18px 0; background: #101112; border-bottom: 1px solid #292b2e; display: flex; align-items: center; }
+    header img { width: 140px; height: auto; }
+    main { display: grid; gap: 24px; max-width: 1232px; margin: auto; padding: 20px 18px calc(92px + env(safe-area-inset-bottom)); }
+    main > a { justify-self: start; }
+    h1 { margin: 0; font-size: 26px; line-height: 1.3; }
+    .heading { min-height: 72px; }
+    .block { display: block; background: #292b2e; border-radius: 4px; animation: pulse 1.8s ease-in-out infinite; }
+    .company { height: 16px; width: 160px; margin-top: 8px; }
+    .follow { height: 44px; width: 160px; }
+    .surface { border: 1px solid #303235; border-radius: 8px; overflow: hidden; background: #141414; }
+    .symbol-info { min-height: 280px; padding: 24px; display: grid; align-content: start; gap: 20px; }
+    .identity { display: flex; align-items: center; gap: 12px; }
+    .logo { height: 48px; width: 48px; }
+    .name { height: 20px; width: 120px; }
+    .price { height: 32px; width: 140px; }
+    .change { height: 16px; width: 180px; }
+    .chart-heading { min-height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .chart-title { width: 64px; height: 24px; }
+    .modes { width: 144px; height: 44px; }
+    .chart { height: 460px; }
+    .tabs { display: flex; gap: 8px; }
+    .tabs span { height: 44px; flex: 1; max-width: 160px; }
+    .recovery { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom)); right: 18px; }
+    .recovery a { padding: 10px 16px; background: #1d1f21; border: 1px solid #3a3c3f; border-radius: 6px; }
+    [hidden] { display: none !important; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+    @media (min-width: 768px) { main { padding: 32px; gap: 28px; } .symbol-info { min-height: 214px; } }
+    @media (prefers-reduced-motion: reduce) { .block { animation: none; } }
+    @keyframes pulse { 50% { opacity: .5; } }
+  </style>
+</head>
+<body>
+  <header><a href="/" aria-label="StockMarket"><img src="/assets/icons/logo.svg" alt="StockMarket" width="140" height="32"></a></header>
+  <main aria-busy="true" aria-label="Loading stock">
+    <a href="/" data-copy="back">Back to Today</a>
+    <div class="heading"><h1 id="symbol"><span class="block" style="height:32px;width:96px"></span></h1><span class="block company"></span></div>
+    <span class="block follow"></span>
+    <div class="surface symbol-info" aria-hidden="true"><div class="identity"><span class="block logo"></span><span class="block name"></span></div><span class="block price"></span><span class="block change"></span></div>
+    <section aria-hidden="true"><div class="chart-heading"><span class="block chart-title"></span><span class="block modes"></span></div><div class="surface block chart"></div></section>
+    <div class="tabs" aria-hidden="true"><span class="block"></span><span class="block"></span><span class="block"></span></div>
+    <span class="sr-only" role="status" data-copy="loading">Loading stock</span>
+  </main>
+  <div class="recovery" hidden><a id="retry" href="/" data-copy="retry">Try again</a></div>
+  <noscript><p><a href="/">Return to StockMarket</a></p></noscript>
+  <script>
+    (() => {
+      // Provider links open a document, not a Next Link. Paint this public shell before navigating.
+      const thai = document.cookie.split(";").some(cookie => cookie.trim() === "stockmarket-locale=th");
+      const copy = thai
+        ? { back: "\u0e01\u0e25\u0e31\u0e1a\u0e2b\u0e19\u0e49\u0e32\u0e27\u0e31\u0e19\u0e19\u0e35\u0e49", loading: "\u0e01\u0e33\u0e25\u0e31\u0e07\u0e42\u0e2b\u0e25\u0e14\u0e02\u0e49\u0e2d\u0e21\u0e39\u0e25\u0e2b\u0e38\u0e49\u0e19", retry: "\u0e25\u0e2d\u0e07\u0e2d\u0e35\u0e01\u0e04\u0e23\u0e31\u0e49\u0e07" }
+        : { back: "Back to Today", loading: "Loading stock", retry: "Try again" };
+      document.documentElement.lang = thai ? "th" : "en";
+      document.querySelectorAll("[data-copy]").forEach(node => { node.textContent = copy[node.dataset.copy]; });
+      document.querySelector("main").setAttribute("aria-label", copy.loading);
+      const symbol = (new URLSearchParams(location.search).get("symbol") || "").trim().toUpperCase();
+      const valid = /^[A-Z0-9][A-Z0-9.-]{0,14}$/.test(symbol);
+      const destination = valid ? "/stocks/" + encodeURIComponent(symbol) : "/";
+      if (valid) document.getElementById("symbol").textContent = symbol;
+      document.getElementById("retry").href = destination;
+      requestAnimationFrame(() => requestAnimationFrame(() => location.replace(destination)));
+      setTimeout(() => { document.querySelector(".recovery").hidden = false; }, 10000);
+    })();
+  </script>
+</body>
+</html>

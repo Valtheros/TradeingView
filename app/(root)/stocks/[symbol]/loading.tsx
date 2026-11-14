@@ -1,5 +1,9 @@
-import { StockSkeleton } from "@/components/PageSkeleton";
-import { headers } from "next/headers";
-import { getSessionCookie } from "better-auth/cookies";
+"use client";
 
-export default async function Loading() { return <StockSkeleton guest={!getSessionCookie(await headers())} />; }
+import { StockSkeleton } from "@/components/PageSkeleton";
+import { useAppAccess } from "@/components/AppAccessProvider";
+
+export default function Loading() {
+  const { user } = useAppAccess();
+  return <StockSkeleton guest={!user} />;
+}

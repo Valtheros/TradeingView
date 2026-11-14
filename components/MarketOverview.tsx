@@ -18,7 +18,7 @@ export default function MarketOverview({ publicOnly = false }: { publicOnly?: bo
   const config = useMemo(() => {
     if (!publicOnly) return tab === "overview" ? overview : heatmap;
     return tab === "heatmap" ? { ...heatmap, locale } : { ...overview, locale,
-      largeChartUrl: typeof window === "undefined" ? "" : `${window.location.origin}/stocks/{tvsymbol}`,
+      largeChartUrl: typeof window === "undefined" ? "" : `${window.location.origin}/stock-loading.html?symbol={tvsymbol}`,
       tabs: [{ title: dictionary.daily.usMarket, symbols: PUBLIC_STOCKS.map(stock => ({ s: stock.tvSymbol, d: stock.name })) }],
     };
   }, [publicOnly, tab, locale, dictionary.daily.usMarket]);

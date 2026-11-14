@@ -8,23 +8,35 @@ function worker(fetcher = async () => new Response("network")) {
   const handlers = {};
   const removed = [];
   const saved = [];
+  const matched = [];
   const cached = new Response("offline");
   vm.runInNewContext(source, {
     URL, Response, fetch: fetcher,
     self: { location: { origin: "https://stocks.example" }, addEventListener: (event, handler) => { handlers[event] = handler; }, skipWaiting() {}, clients: { claim: async () => {} } },
-    caches: { open: async () => ({ addAll: async assets => saved.push(...assets) }), match: async () => cached, keys: async () => ["stockmarket-shell-v0", "stockmarket-shell-v1", "stockmarket-shell-v2", "unrelated-app"], delete: async (key) => { removed.push(key); } },
+    caches: { open: async () => ({ addAll: async assets => saved.push(...assets) }), match: async key => { matched.push(key); return cached; }, keys: async () => ["stockmarket-shell-v0", "stockmarket-shell-v1", "stockmarket-shell-v2", "stockmarket-shell-v3", "unrelated-app"], delete: async (key) => { removed.push(key); } },
   });
-  return { handlers, removed, saved };
+  return { handlers, removed, saved, matched };
 }
 
-test("worker installation caches only the offline screen and brand images, including iPhone startup images", async () => {
+test("worker installation caches only public loading/offline screens and brand images", async () => {
   const { handlers, saved } = worker();
   let finished;
   handlers.install({ waitUntil(promise) { finished = promise; } });
   await finished;
   assert.ok(saved.includes("/assets/icons/startup-iphone17-portrait.png"));
   assert.ok(saved.includes("/assets/icons/startup-iphone17-landscape.png"));
-  assert.ok(saved.every(path => path === "/offline.html" || /^\/assets\/icons\/[a-z0-9-]+\.png$/.test(path)));
+  assert.ok(saved.includes("/stock-loading.html"));
+  assert.ok(saved.every(path => ["/offline.html", "/stock-loading.html", "/assets/icons/logo.svg"].includes(path) || /^\/assets\/icons\/[a-z0-9-]+\.png$/.test(path)));
+});
+
+test("widget stock navigations reuse the same public skeleton without caching stock documents or query data", async () => {
+  const { handlers, matched } = worker(() => { throw new Error("Static handoff must work from cache"); });
+  for (const symbol of ["AAPL", "ORCL"]) {
+    let result;
+    handlers.fetch({ request: { url: `https://stocks.example/stock-loading.html?symbol=${symbol}`, method: "GET", mode: "navigate" }, respondWith(response) { result = response; } });
+    assert.equal((await result).status, 200);
+  }
+  assert.deepEqual(matched, ["/stock-loading.html", "/stock-loading.html"]);
 });
 
 test("worker ignores APIs, POSTs, RSC and third-party resources", () => {
@@ -50,5 +62,5 @@ test("worker activation removes only obsolete StockMarket shell caches", async (
   let finished;
   handlers.activate({ waitUntil(promise) { finished = promise; } });
   await finished;
-  assert.deepEqual(removed, ["stockmarket-shell-v0", "stockmarket-shell-v1"]);
+  assert.deepEqual(removed, ["stockmarket-shell-v0", "stockmarket-shell-v1", "stockmarket-shell-v2"]);
 });

@@ -20,7 +20,7 @@ export default function GuestMarketData() {
   }, []);
   const config = useMemo(() => ({
     width: "100%", height: 520, locale, colorTheme: "dark", isTransparent: true, showSymbolLogo: true,
-    largeChartUrl: typeof window === "undefined" ? "" : `${window.location.origin}/stocks/{tvsymbol}`,
+    largeChartUrl: typeof window === "undefined" ? "" : `${window.location.origin}/stock-loading.html?symbol={tvsymbol}`,
     ...(compact ? { showChart: false, tabs: [{ title: dictionary.guest.catalog, symbols: PUBLIC_STOCKS.map(stock => ({ s: stock.tvSymbol, d: stock.name })) }] }
       : { symbolsGroups: [{ name: dictionary.guest.catalog, symbols: PUBLIC_STOCKS.map(stock => ({ name: stock.tvSymbol, displayName: stock.name })) }] }),
   }), [dictionary.guest.catalog, locale, compact]);

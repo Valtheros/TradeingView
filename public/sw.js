@@ -1,5 +1,5 @@
-const CACHE = "stockmarket-shell-v2";
-const ASSETS = ["/offline.html", "/assets/icons/app-192.png", "/assets/icons/app-512.png", "/assets/icons/app-maskable.png", "/assets/icons/apple-touch-icon.png", "/assets/icons/startup-iphone17-portrait.png", "/assets/icons/startup-iphone17-landscape.png"];
+const CACHE = "stockmarket-shell-v3";
+const ASSETS = ["/offline.html", "/stock-loading.html", "/assets/icons/logo.svg", "/assets/icons/app-192.png", "/assets/icons/app-512.png", "/assets/icons/app-maskable.png", "/assets/icons/apple-touch-icon.png", "/assets/icons/startup-iphone17-portrait.png", "/assets/icons/startup-iphone17-landscape.png"];
 
 self.addEventListener("install", (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
@@ -19,7 +19,9 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(request.url);
   if (request.method !== "GET" || url.origin !== self.location.origin) return;
   if (ASSETS.includes(url.pathname)) {
-    event.respondWith(caches.match(request).then((cached) => cached || fetch(request)));
+    // The stock handoff is identical for all symbols; only its browser script reads the query.
+    const key = url.pathname === "/stock-loading.html" ? url.pathname : request;
+    event.respondWith(caches.match(key).then((cached) => cached || fetch(request)));
   } else if (request.mode === "navigate") {
     // Never store authenticated documents, RSC responses, API data or stock prices.
     event.respondWith(fetch(request).catch(async () => (await caches.match("/offline.html")) || Response.error()));
