@@ -45,7 +45,7 @@ export function StockSkeleton({ guest = false }: { guest?: boolean }) {
     {guest ? <div className="page-heading"><div><span className="skeleton-block h-8 w-24" /><span className="skeleton-block h-4 w-40 mt-2" /></div></div> : <div className="stock-detail-heading"><div className="stock-detail-identity"><span className="stock-logo skeleton-block" /><div className="skeleton-heading"><span className="skeleton-block" /><span className="skeleton-block" /></div></div><span className="skeleton-block h-12 w-24" /></div>}
     <div className="stock-detail-actions"><span className="skeleton-block w-40 h-11" />{!guest && <span className="skeleton-block w-24 h-11" />}</div>
     {guest ? <div className="chart-surface guest-symbol-info"><span className="skeleton-block" style={{ height: 170 }} /><div className="tradingview-widget-copyright"><span className="skeleton-block h-3 w-20" /></div></div> : <span className="skeleton-block h-4 w-48" />}
-    <section className="stock-chart"><div className="section-heading"><span className="skeleton-block w-16 h-6" /><span className="skeleton-block w-36 h-11" /></div><div className="chart-surface skeleton-block" style={{ height: 460 }} /></section>
+    <section className="stock-chart"><div className="section-heading"><span className="skeleton-block w-16 h-6" /><span className="skeleton-block w-36 h-11" /></div><div className="chart-surface"><div className="skeleton-block" style={{ height: 460 }} />{guest && <div className="tradingview-widget-copyright"><span className="skeleton-block h-3 w-20" /></div>}</div></section>
     <div className="detail-tabs">{[0, 1, 2].map(i => <span className="skeleton-block h-11 w-24" key={i} />)}</div>
   </div>;
 }

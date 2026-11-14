@@ -1,4 +1,4 @@
-const CACHE = "stockmarket-shell-v3";
+const CACHE = "stockmarket-shell-v4";
 const ASSETS = ["/offline.html", "/stock-loading.html", "/assets/icons/logo.svg", "/assets/icons/app-192.png", "/assets/icons/app-512.png", "/assets/icons/app-maskable.png", "/assets/icons/apple-touch-icon.png", "/assets/icons/startup-iphone17-portrait.png", "/assets/icons/startup-iphone17-landscape.png"];
 
 self.addEventListener("install", (event) => {

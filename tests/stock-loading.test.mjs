@@ -64,6 +64,8 @@ test("public skeleton localizes without auth/data requests and exposes a retry f
   assert.doesNotMatch(script, /fetch\(|localStorage|sessionStorage|innerHTML|document\.write/);
   assert.match(html, /prefers-reduced-motion/);
   assert.match(html, /height: 460px/);
+  assert.match(html, /min-height: 324px/);
+  assert.match(html, /chart-footer \{ height: 44px/);
 });
 
 test("both public stock widgets navigate through the public shell; native loading never awaits server data", () => {

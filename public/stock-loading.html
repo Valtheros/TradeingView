@@ -21,7 +21,7 @@
     .company { height: 16px; width: 160px; margin-top: 8px; }
     .follow { height: 44px; width: 160px; }
     .surface { border: 1px solid #303235; border-radius: 8px; overflow: hidden; background: #141414; }
-    .symbol-info { min-height: 280px; padding: 24px; display: grid; align-content: start; gap: 20px; }
+    .symbol-info { min-height: 324px; padding: 24px; display: grid; align-content: start; gap: 20px; }
     .identity { display: flex; align-items: center; gap: 12px; }
     .logo { height: 48px; width: 48px; }
     .name { height: 20px; width: 120px; }
@@ -31,6 +31,7 @@
     .chart-title { width: 64px; height: 24px; }
     .modes { width: 144px; height: 44px; }
     .chart { height: 460px; }
+    .chart-footer { height: 44px; }
     .tabs { display: flex; gap: 8px; }
     .tabs span { height: 44px; flex: 1; max-width: 160px; }
     .recovery { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom)); right: 18px; }
@@ -49,7 +50,7 @@
     <div class="heading"><h1 id="symbol"><span class="block" style="height:32px;width:96px"></span></h1><span class="block company"></span></div>
     <span class="block follow"></span>
     <div class="surface symbol-info" aria-hidden="true"><div class="identity"><span class="block logo"></span><span class="block name"></span></div><span class="block price"></span><span class="block change"></span></div>
-    <section aria-hidden="true"><div class="chart-heading"><span class="block chart-title"></span><span class="block modes"></span></div><div class="surface block chart"></div></section>
+    <section aria-hidden="true"><div class="chart-heading"><span class="block chart-title"></span><span class="block modes"></span></div><div class="surface"><div class="block chart"></div><div class="chart-footer"></div></div></section>
     <div class="tabs" aria-hidden="true"><span class="block"></span><span class="block"></span><span class="block"></span></div>
     <span class="sr-only" role="status" data-copy="loading">Loading stock</span>
   </main>
