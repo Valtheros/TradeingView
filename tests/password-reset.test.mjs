@@ -110,8 +110,8 @@ test("reset API rejects malformed email/code/password before initializing auth; 
   assert.equal(initialized, 0);
   await route.POST(new Request("https://stocks.example/api/auth/sign-in/email", { method: "POST", body: "{}" }));
   assert.equal(initialized, 1);
-  const proxy = load("../proxy.ts", { "next/server": {}, "better-auth/cookies": {}, "./lib/auth-navigation": {} });
-  assert.equal(JSON.stringify(proxy.config.matcher), JSON.stringify(["/watchlist/:path*", "/news/:path*"]));
+  const proxy = load("../proxy.ts", { "next/server": {}, "better-auth/cookies": {}, "./lib/auth-navigation": {}, "./lib/quotes": {} });
+  assert.equal(JSON.stringify(proxy.config.matcher), JSON.stringify(["/watchlist/:path*", "/news/:path*", "/stocks/:path*"]));
 });
 
 test("OTP email distinguishes recovery from verification, includes both reset languages and accurate expiry", async () => {

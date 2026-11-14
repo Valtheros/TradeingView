@@ -165,3 +165,32 @@ test("signup queues only the user returned by Better Auth; background and provid
   const signup = readFileSync(new URL("../app/(auth)/sign-up/SignUpForm.tsx", import.meta.url), "utf8");
   assert.doesNotMatch(signup, /Fetchnews|user\.action/);
 });
+
+test("proxy keeps public stock requests free of auth checks and returns hard 404s before streaming", async () => {
+  let cookieChecks = 0;
+  const handler = load("../proxy.ts", {
+    "next/server": { NextResponse: {
+      next: () => new Response("next"),
+      rewrite: (url, options) => new Response(url.pathname, options),
+      redirect: url => new Response(null, { status: 307, headers: { Location: url.href } }),
+    } },
+    "better-auth/cookies": { getSessionCookie: () => { cookieChecks++; return null; } },
+    "./lib/auth-navigation": navigation,
+    "./lib/quotes": { parseSymbols },
+  });
+  for (const symbol of ["AAPL", "BRK.B", "SPY"]) {
+    const url = new URL(`https://stocks.example/stocks/${symbol}`);
+    assert.equal((await handler.proxy({ url: url.href, nextUrl: url })).status, 200);
+  }
+  for (const symbol of ["BAD:SYMBOL", "%2Fbad", "AAPL/extra", ""]) {
+    const url = new URL(`https://stocks.example/stocks/${symbol}`);
+    const result = await handler.proxy({ url: url.href, nextUrl: url });
+    assert.equal(result.status, 404);
+    assert.equal(await result.text(), "/_not-found");
+  }
+  assert.equal(cookieChecks, 0);
+  const url = new URL("https://stocks.example/watchlist");
+  const result = await handler.proxy({ url: url.href, nextUrl: url });
+  assert.equal(result.status, 307);
+  assert.equal(result.headers.get("Location"), "https://stocks.example/sign-in?returnTo=%2Fwatchlist");
+});
