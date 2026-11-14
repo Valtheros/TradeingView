@@ -11,6 +11,23 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 2px soli
 .brand-link img { width: 156px; height: auto; }
 .header-controls { display: flex; flex-direction: column; align-items: stretch; gap: 12px; margin-top: auto; padding-bottom: env(safe-area-inset-bottom); }
 .header-controls > button { min-width: 44px; min-height: 44px; }
+.guest-controls { display: flex; align-items: center; gap: 8px; }
+.guest-login { flex: 1; white-space: nowrap; }
+.access-dialog { background: #18191b; border-color: #343638; gap: 16px; }
+.access-dialog [data-slot=dialog-title] { padding-right: 24px; line-height: 1.5; }
+.access-dialog [data-slot=dialog-description] { line-height: 1.8; }
+.guest-search-bar { display: flex; align-items: center; flex-wrap: wrap; gap: 16px; }
+.guest-news { display: flex; flex-direction: column; align-items: flex-start; gap: 16px; padding: 24px 0; border-top: 1px solid #303235; }
+.guest-news h2 { font-size: 18px; font-weight: 600; }.guest-news p, .guest-data-note { color: #a2a6ab; line-height: 1.8; }
+.guest-data-note { padding-top: 12px; font-size: 12px; }
+.tradingview-widget-copyright { min-height: 44px; display: flex; align-items: center; justify-content: flex-end; padding: 0 12px; font-size: 12px; color: #a2a6ab; }
+.tradingview-widget-copyright a { display: inline-flex; align-items: center; min-height: 44px; }
+.guest-symbol-info .tradingview-widget-container, .guest-symbol-info .tradingview-widget-container__widget { height: auto !important; min-height: 170px; }
+.guest-symbol-info iframe { display: block; }
+@media (max-width: 767px) {
+  .guest-symbol-info .tradingview-widget-container, .guest-symbol-info .tradingview-widget-container__widget { min-height: 280px; }
+  .guest-symbol-info > .skeleton-block { height: 280px !important; }
+}
 .desktop-nav { display: flex; flex-direction: column; align-items: stretch; gap: 6px; }
 .desktop-nav a, .nav-search { min-height: 46px; display: flex; align-items: center; justify-content: flex-start; gap: 12px; padding: 12px; color: #a2a6ab; font-size: 14px; font-weight: 500; border-radius: 6px; }
 .desktop-nav a[aria-current], .desktop-nav a:hover, .nav-search:hover { color: #f4d16a; }

@@ -38,26 +38,31 @@ export function DigestSkeleton() {
   </section>;
 }
 
-export function StockSkeleton() {
+export function StockSkeleton({ guest = false }: { guest?: boolean }) {
   const { dictionary } = useLanguage();
   return <div className="daily-page stock-details-page" aria-busy="true" aria-label={dictionary.common.loading}>
     <span className="skeleton-block h-11 w-24" />
     <div className="stock-detail-heading"><div className="stock-detail-identity"><span className="stock-logo skeleton-block" /><div className="skeleton-heading"><span className="skeleton-block" /><span className="skeleton-block" /></div></div><span className="skeleton-block h-12 w-24" /></div>
     <div className="stock-detail-actions"><span className="skeleton-block w-40 h-11" /><span className="skeleton-block w-24 h-11" /></div>
-    <span className="skeleton-block h-4 w-48" />
+    {guest ? <div className="chart-surface guest-symbol-info"><span className="skeleton-block" style={{ height: 170 }} /><div className="tradingview-widget-copyright"><span className="skeleton-block h-3 w-20" /></div></div> : <span className="skeleton-block h-4 w-48" />}
     <section className="stock-chart"><div className="section-heading"><span className="skeleton-block w-16 h-6" /><span className="skeleton-block w-36 h-11" /></div><div className="chart-surface skeleton-block" style={{ height: 460 }} /></section>
     <div className="detail-tabs">{[0, 1, 2].map(i => <span className="skeleton-block h-11 w-24" key={i} />)}</div>
   </div>;
 }
 
-export default function PageSkeleton({ news = false, watchlist = false }: { news?: boolean; watchlist?: boolean }) {
+export default function PageSkeleton({ news = false, watchlist = false, guest = false }: { news?: boolean; watchlist?: boolean; guest?: boolean }) {
   const { dictionary } = useLanguage();
   const today = !news && !watchlist;
   return <div className={`daily-page${news ? " news-page" : today ? " today-page" : ""}`} aria-busy="true" aria-label={dictionary.common.loading}>
     <div className={`page-heading${today ? " today-heading" : ""}`}><div className="skeleton-heading"><span className="skeleton-block" /><span className="skeleton-block" />{news && <span className="skeleton-block" />}</div></div>
     {news ? <section><div className="section-heading"><span className="skeleton-block w-36 h-6" /></div><div className="digest-meta"><span className="skeleton-block w-32 h-3" /><span className="skeleton-block w-6 h-3" /></div>
       <div className="digest-full skeleton-news">{[0, 1, 2].map(item => <div className="skeleton-news-story" key={item}><span className="skeleton-block h-6 w-3/4" /><span className="skeleton-block h-14" /><span className="skeleton-block h-14" /><span className="skeleton-block h-12" /></div>)}</div>
-    </section> : watchlist ? <StocksSkeleton count={20} /> : <>
+    </section> : watchlist ? <StocksSkeleton count={20} /> : guest ? <>
+      <div className="guest-search-bar"><span className="skeleton-block h-11 w-28" /><span className="skeleton-block h-4 w-40" /></div>
+      <section className="guest-market-data"><div className="section-heading"><span className="skeleton-block h-6 w-40" /></div><div className="chart-surface skeleton-block" style={{ height: 564 }} /><p className="section-meta guest-data-note"><span className="skeleton-block h-4 w-64 max-w-full" /></p></section>
+      <section className="market-section"><div className="section-heading"><span className="skeleton-block h-6 w-32" /><span className="skeleton-block h-12 w-36" /></div><div className="chart-surface skeleton-block" style={{ height: 464 }} /></section>
+      <section className="guest-news"><span className="skeleton-block h-6 w-36" /><span className="skeleton-block h-4 w-64 max-w-full" /><span className="skeleton-block h-11 w-28" /></section>
+    </> : <>
       <StocksSkeleton compact />
       <div className="today-secondary"><DigestSkeleton /><div className="market-section"><div className="section-heading"><span className="skeleton-block w-40 h-6" /></div><div className="chart-placeholder skeleton-block" /></div></div>
     </>}

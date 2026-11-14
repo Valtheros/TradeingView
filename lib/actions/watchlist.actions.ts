@@ -5,10 +5,11 @@ import { getCurrentSession } from "../better-auth/session";
 import { parseSymbols } from "../quotes";
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { authHref } from "../auth-navigation";
 
 async function currentUser() {
   const session = await getCurrentSession();
-  if (!session?.user) redirect("/sign-in");
+  if (!session?.user) redirect(authHref("/sign-in", "/watchlist"));
   return session.user;
 }
 
@@ -25,7 +26,9 @@ function refreshWatchlist(symbol: string) {
 }
 
 export const addWatchlistItem = async (symbol: string, company: string) => {
-  const user = await currentUser();
+  const session = await getCurrentSession();
+  if (!session?.user) return { success: false as const, code: "AUTH_REQUIRED" as const };
+  const user = session.user;
   const cleanSymbol = stockSymbol(symbol);
   if (typeof company !== "string" || !company.trim() || company.trim().length > 160) throw new Error("Invalid company name");
   try {
@@ -47,7 +50,9 @@ export const addWatchlistItem = async (symbol: string, company: string) => {
 };
 
 export const removeFromWatchlist = async (symbol: string) => {
-  const user = await currentUser();
+  const session = await getCurrentSession();
+  if (!session?.user) return { success: false as const, code: "AUTH_REQUIRED" as const };
+  const user = session.user;
   const cleanSymbol = stockSymbol(symbol);
   try {
 

@@ -38,7 +38,7 @@ test("search uses one US lookup without per-result checks, retains watchlist sta
     null,
     ...Array.from({ length: 12 }, (_, i) => ({ symbol: `TEST${i}`, type: "Common Stock" })),
   ];
-  const api = load("../lib/actions/finnhub.actions.ts", {
+  const globals = {
     AbortSignal,
     console: { error: () => {} },
     require: name => { assert.ok(name in modules, `Unexpected dependency ${name}`); return modules[name]; },
@@ -49,7 +49,11 @@ test("search uses one US lookup without per-result checks, retains watchlist sta
       if (request.pathname === "/api/v1/stock/profile2") return { ok: true, json: async () => request.searchParams.get("symbol") === "NVDA" ? { name: "NVIDIA", exchange: "NASDAQ" } : {} };
       throw new Error(`Unexpected upstream ${request.hostname}${request.pathname}`);
     },
-  });
+  };
+  modules["server-only"] = {};
+  modules["./env"] = modules["../finnhub/env"];
+  modules["../finnhub/data"] = load("../lib/finnhub/data.ts", globals);
+  const api = load("../lib/actions/finnhub.actions.ts", globals);
 
   const pending = api.searchStocks(" NVDA ");
   await new Promise(setImmediate);

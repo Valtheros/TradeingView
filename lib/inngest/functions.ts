@@ -1,6 +1,6 @@
 import { NonRetriableError } from 'inngest';
 import { ObjectId } from 'mongodb';
-import { getNews } from '../actions/finnhub.actions';
+import { getNews } from '../finnhub/data';
 import { getRecentNewsSummaries, saveUserNewsSummary } from '../actions/saveusernews.action';
 import { getAllUserForNews } from '../actions/user.action';
 import { getWatchlistSymbolsByEmail } from '../watchlist-server';
@@ -33,6 +33,7 @@ export const DailyNewsSummary = inngest.createFunction(
   [{ event: 'app/news.daily.fetched' }, ...(!isPreview ? [{ cron: 'TZ=Asia/Bangkok 0 19 * * *' }] : [])],
   async ({ event, step }) => {
     const userId = event.data.userId;
+    if (isPreview && !userId) throw new NonRetriableError('Preview news requires a specific test user');
     if (userId !== undefined && (typeof userId !== 'string' || !ObjectId.isValid(userId))) throw new NonRetriableError('Invalid news user ID');
     const users = await step.run('get-all-users', () => getAllUserForNews(userId));
     const requestedLocales: unknown[] = Array.isArray(event.data.locales) ? event.data.locales : ['en', 'th'];

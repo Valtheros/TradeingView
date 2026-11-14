@@ -4,7 +4,7 @@ import { inngest } from "../inngest/client";
 import { headers, cookies } from "next/headers";
 import { connecttoDatabase } from "@/database/mongoose";
 import { checkRateLimit } from "@/database/models/rateLimit.model";
-import { Fetchnews } from './user.action';
+import { Fetchnews } from "./user.action";
 
 type RequestHeaders = Awaited<ReturnType<typeof headers>>;
 type AuthApi = Awaited<ReturnType<typeof getAuth>>["api"];

@@ -47,7 +47,7 @@ function pipeline({ preview = false, current = [], users = [user], articles = [{
   const functions = load('../lib/inngest/functions.ts', {
     './client': { inngest: { createFunction: (config, triggers, handler) => ({ config, triggers, handler }) } },
     './environment': { isPreview: preview }, './gemini': { NEWS_MODEL: 'gemini-3.1-flash-lite', generateGeminiText: async () => { calls.push('ai'); if (aiError) throw aiError; return '<p>Generated news</p>'; } },
-    '../actions/finnhub.actions': { getNews: async () => { calls.push('provider'); return articles; } },
+    '../finnhub/data': { getNews: async () => { calls.push('provider'); return articles; } },
     '../actions/user.action': { getAllUserForNews: async () => { if (databaseError) throw databaseError; return users; } },
     '../actions/saveusernews.action': { getRecentNewsSummaries: async () => current, saveUserNewsSummary: async value => { if (saveError) throw saveError; saves.push(value); return saveResult; } },
     '../watchlist-server': { getWatchlistSymbolsByEmail: async () => ['AAPL'] },
@@ -102,6 +102,7 @@ test('AI, provider and persistence failures never report a successful saved edit
 test('Preview does not register cron or send welcome emails', async () => {
   const api = pipeline({ preview: true });
   assert.ok(api.DailyNewsSummary.triggers.every(trigger => !trigger.cron));
+  await assert.rejects(api.DailyNewsSummary.handler({ event: { data: {} }, step: api.step }), /specific test user/);
   assert.equal((await api.sendSignUpEmail.handler({ event: { data: {} }, step: api.step })).status, 'skipped');
   assert.equal(api.calls.length, 0);
 });

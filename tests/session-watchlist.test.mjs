@@ -73,6 +73,7 @@ test("watchlist validates before writing, scopes users, inserts atomically and i
   const api = load("../lib/actions/watchlist.actions.ts", {
     "../better-auth/session": { getCurrentSession: async () => user ? { user: { id: user } } : null },
     "../quotes": { parseSymbols },
+    "../auth-navigation": { authHref: (path, returnTo) => `${path}?returnTo=${encodeURIComponent(returnTo)}` },
     "next/navigation": { redirect: path => { throw new Error(`Redirect ${path}`); } },
     "next/cache": { revalidatePath: path => invalidated.push(path) },
     "@/database/models/watchlist.model": { Watchlist: {
@@ -109,8 +110,8 @@ test("watchlist validates before writing, scopes users, inserts atomically and i
   await assert.rejects(api.addWatchlistItem("MSFT", "Microsoft"), /Failed to add/);
   user = null;
   const before = writes;
-  await assert.rejects(api.addWatchlistItem("AAPL", "Apple"), /Redirect/);
-  await assert.rejects(api.removeFromWatchlist("AAPL"), /Redirect/);
+  assert.equal((await api.addWatchlistItem("AAPL", "Apple")).code, "AUTH_REQUIRED");
+  assert.equal((await api.removeFromWatchlist("AAPL")).code, "AUTH_REQUIRED");
   await assert.rejects(api.getUserWatchlist(), /Redirect/);
   assert.equal(writes, before);
 });

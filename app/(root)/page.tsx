@@ -10,6 +10,8 @@ import { Suspense } from "react";
 import { StocksSkeleton, DigestSkeleton } from "@/components/PageSkeleton";
 import SectionBoundary from "@/components/SectionBoundary";
 import type { Locale } from "@/lib/i18n";
+import { getCurrentSession } from "@/lib/better-auth/session";
+import GuestToday from "@/components/GuestToday";
 
 const names: Record<string, string> = { AAPL: "Apple", MSFT: "Microsoft", GOOGL: "Alphabet", AMZN: "Amazon", NVDA: "NVIDIA", TSLA: "Tesla", META: "Meta Platforms", JPM: "JPMorgan Chase", V: "Visa", WMT: "Walmart" };
 
@@ -27,11 +29,11 @@ async function TodayDigest({ locale }: { locale: Locale }) {
 }
 
 export default async function Today() {
-  const locale = await getServerLocale();
+  const [locale, session] = await Promise.all([getServerLocale(), getCurrentSession()]);
   const copy = getDictionary(locale).daily;
-  return <div className="daily-page today-page">
+  return <div className="daily-page today-page" data-view={session?.user ? "member-today" : "guest-today"}>
     <div className="page-heading today-heading"><div><h1 className="skeleton-text">{copy.today}</h1><p className="section-meta skeleton-text">{new Date().toLocaleDateString(locale === "th" ? "th-TH" : "en-US", { weekday: "long", day: "numeric", month: "long", timeZone: "Asia/Bangkok" })}</p></div><span className="market-label">{copy.usMarket}<span>USD</span></span></div>
-    <SectionBoundary><Suspense fallback={<StocksSkeleton compact />}><TodayStocks /></Suspense></SectionBoundary>
-    <div className="today-secondary"><SectionBoundary><Suspense fallback={<DigestSkeleton />}><TodayDigest locale={locale} /></Suspense></SectionBoundary><MarketOverview /></div>
+    {!session?.user ? <GuestToday /> : <><SectionBoundary><Suspense fallback={<StocksSkeleton compact />}><TodayStocks /></Suspense></SectionBoundary>
+    <div className="today-secondary"><SectionBoundary><Suspense fallback={<DigestSkeleton />}><TodayDigest locale={locale} /></Suspense></SectionBoundary><MarketOverview /></div></>}
   </div>;
 }

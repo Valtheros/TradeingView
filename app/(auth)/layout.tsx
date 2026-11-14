@@ -1,16 +1,8 @@
-import { getCurrentSession } from "@/lib/better-auth/session";
 import Image from "next/image"
 import Link from "next/link"
-import { redirect } from "next/navigation";
 import LanguageToggle from "@/components/LanguageToggle";
 import { Suspense } from "react";
 import { AuthSkeleton } from "@/components/PageSkeleton";
-
-async function SessionGate({ children }: { children: React.ReactNode }) {
-    const session = await getCurrentSession();
-    if(session?.user) redirect('/')
-    return children;
-}
 
 const layout = ({ children }: { children: React.ReactNode }) => {
     return (
@@ -22,7 +14,7 @@ const layout = ({ children }: { children: React.ReactNode }) => {
                 <LanguageToggle />
             </header>
             <section className="auth-form">
-                <Suspense fallback={<AuthSkeleton />}><SessionGate>{children}</SessionGate></Suspense>
+                <Suspense fallback={<AuthSkeleton />}>{children}</Suspense>
             </section>
     </main>
   )

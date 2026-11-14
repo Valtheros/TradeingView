@@ -24,7 +24,7 @@ const UserDropdown = ({ user }: { user: User }) => {
   const handleSignOut = async () => {
     const result = await signOut();
     if (result.success) {
-      router.push("/sign-in");
+      router.replace("/");
     }else{
       toast.error(result.error);
     }

@@ -1,0 +1,189 @@
+import "server-only";
+
+import {
+  getDateRange,
+  validateArticle,
+  formatArticle,
+  formatChangePercent,
+  formatMarketCapValue,
+  formatPrice,
+} from "@/lib/utils";
+import { cache } from "react";
+import { getFinnhubApiKey } from "./env";
+
+const FINNHUB_BASE_URL = "https://finnhub.io/api/v1";
+
+type FinnhubCompanyProfile = {
+  name?: string;
+  ticker?: string;
+  exchange?: string;
+  logo?: string;
+};
+
+export const getStockProfile = cache(async (symbol: string): Promise<FinnhubCompanyProfile | null> => {
+  const token = getFinnhubApiKey();
+  if (!token) return null;
+  try {
+    const response = await fetch(`https://finnhub.io/api/v1/stock/profile2?symbol=${encodeURIComponent(symbol)}`, {
+      headers: { "X-Finnhub-Token": token }, next: { revalidate: 3600 }, signal: AbortSignal.timeout(8000),
+    });
+    if (!response.ok) return null;
+    return await response.json();
+  } catch { return null; }
+});
+
+async function fetchJSON<T>(
+  url: string,
+  revalidateSeconds?: number
+): Promise<T> {
+  const options: RequestInit & { next?: { revalidate?: number } } =
+    revalidateSeconds
+      ? { cache: "force-cache", next: { revalidate: revalidateSeconds } }
+      : { cache: "no-store" };
+
+  const res = await fetch(url, { ...options, signal: AbortSignal.timeout(8000) });
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`Fetch failed ${res.status}: ${text}`);
+  }
+  return (await res.json()) as T;
+}
+
+export { fetchJSON };
+
+export async function getNews(
+  symbols?: string[]
+): Promise<MarketNewsArticle[]> {
+  try {
+    const range = getDateRange(5);
+    const token = getFinnhubApiKey();
+    if (!token) {
+      throw new Error("FINNHUB API key is not configured");
+    }
+    const cleanSymbols = (symbols || [])
+      .map((s) => s?.trim().toUpperCase())
+      .filter((s): s is string => Boolean(s));
+
+    const maxArticles = 6;
+
+    // If we have symbols, try to fetch company news per symbol and round-robin select
+    if (cleanSymbols.length > 0) {
+      const perSymbolArticles: Record<string, RawNewsArticle[]> = {};
+
+      await Promise.all(
+        cleanSymbols.map(async (sym) => {
+          try {
+            const url = `${FINNHUB_BASE_URL}/company-news?symbol=${encodeURIComponent(
+              sym
+            )}&from=${range.from}&to=${range.to}&token=${token}`;
+            const articles = await fetchJSON<RawNewsArticle[]>(url, 300);
+            perSymbolArticles[sym] = (articles || []).filter(validateArticle);
+          } catch (e) {
+            console.error("Error fetching company news for", sym, e);
+            perSymbolArticles[sym] = [];
+          }
+        })
+      );
+
+      const collected: MarketNewsArticle[] = [];
+      // Round-robin up to 6 picks
+      for (let round = 0; round < maxArticles; round++) {
+        for (let i = 0; i < cleanSymbols.length; i++) {
+          const sym = cleanSymbols[i];
+          const list = perSymbolArticles[sym] || [];
+          if (list.length === 0) continue;
+          const article = list.shift();
+          if (!article || !validateArticle(article)) continue;
+          collected.push(formatArticle(article, true, sym, round));
+          if (collected.length >= maxArticles) break;
+        }
+        if (collected.length >= maxArticles) break;
+      }
+
+      if (collected.length > 0) {
+        // Sort by datetime desc
+        collected.sort((a, b) => (b.datetime || 0) - (a.datetime || 0));
+        return collected.slice(0, maxArticles);
+      }
+      // If none collected, fall through to general news
+    }
+
+    // General market news fallback or when no symbols provided
+    const generalUrl = `${FINNHUB_BASE_URL}/news?category=general&token=${token}`;
+    const general = await fetchJSON<RawNewsArticle[]>(generalUrl, 300);
+
+    const seen = new Set<string>();
+    const unique: RawNewsArticle[] = [];
+    for (const art of general || []) {
+      if (!validateArticle(art)) continue;
+      const key = `${art.id}-${art.url}-${art.headline}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      unique.push(art);
+      if (unique.length >= 20) break; // cap early before final slicing
+    }
+
+    const formatted = unique
+      .slice(0, maxArticles)
+      .map((a, idx) => formatArticle(a, false, undefined, idx));
+    return formatted;
+  } catch (err) {
+    console.error("getNews error:", err);
+    throw new Error("Failed to fetch news");
+  }
+}
+
+// Fetch stock details by symbol
+export const getStocksDetails = cache(async (symbol: string) => {
+  const cleanSymbol = symbol.trim().toUpperCase();
+
+  try {
+    const token = getFinnhubApiKey();
+    if (!token) {
+      throw new Error("FINNHUB API key is not configured");
+    }
+    const [quote, profile, financials] = await Promise.all([
+      fetchJSON(
+        // Price data - no caching for accuracy
+        `${FINNHUB_BASE_URL}/quote?symbol=${cleanSymbol}&token=${token}`
+      ),
+      fetchJSON(
+        // Company info - cache 1hr (rarely changes)
+        `${FINNHUB_BASE_URL}/stock/profile2?symbol=${cleanSymbol}&token=${token}`,
+        3600
+      ),
+      fetchJSON(
+        // Financial metrics (P/E, etc.) - cache 30min
+        `${FINNHUB_BASE_URL}/stock/metric?symbol=${cleanSymbol}&metric=all&token=${token}`,
+        1800
+      ),
+    ]);
+
+    // Type cast the responses
+    const quoteData = quote as QuoteData;
+    const profileData = profile as ProfileData;
+    const financialsData = financials as FinancialsData;
+
+    // Check if we got valid quote and profile data
+    if (!quoteData?.c || !profileData?.name) return null;
+
+    const changePercent = quoteData.dp || 0;
+    const peRatio = financialsData?.metric?.peNormalizedAnnual || null;
+
+    return {
+      symbol: cleanSymbol,
+      company: profileData?.name,
+      currentPrice: quoteData.c,
+      changePercent,
+      priceFormatted: formatPrice(quoteData.c),
+      changeFormatted: formatChangePercent(changePercent),
+      peRatio: peRatio?.toFixed(1) || "—",
+      marketCapFormatted: formatMarketCapValue(
+        profileData?.marketCapitalization || 0
+      ),
+    };
+  } catch (error) {
+    console.error(`Error fetching details for ${cleanSymbol}:`, error);
+    return null;
+  }
+});
