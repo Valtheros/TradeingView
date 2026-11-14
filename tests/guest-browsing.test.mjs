@@ -194,3 +194,32 @@ test("proxy keeps public stock requests free of auth checks and returns hard 404
   assert.equal(result.status, 307);
   assert.equal(result.headers.get("Location"), "https://stocks.example/sign-in?returnTo=%2Fwatchlist");
 });
+
+test("follow UI never writes for guests and rolls back optimistic state before requesting expired-session login", async () => {
+  for (const member of [false, true]) {
+    const state = [];
+    const destinations = [];
+    let cursor = 0;
+    let writes = 0;
+    let closedSearch = 0;
+    const button = load("../components/WatchlistButton.tsx", {
+      react: { useState: initial => { const index = cursor++; state[index] = initial; return [initial, value => { state[index] = value; }]; } },
+      "@/lib/actions/watchlist.actions": {
+        addWatchlistItem: async () => { writes++; return { success: false, code: "AUTH_REQUIRED" }; },
+        removeFromWatchlist: forbidden,
+      },
+      "lucide-react": { Star: "Star", Trash2: "Trash" },
+      sonner: { toast: { error: forbidden, success: forbidden } },
+      "@/lib/i18n": { interpolate: text => text },
+      "./LanguageProvider": { useLanguage: () => ({ dictionary: { watchlist: { add: "Follow" } } }) },
+      "./AppAccessProvider": { useAppAccess: () => ({ user: member ? { id: "member" } : null, requestSignIn: path => destinations.push(path) }) },
+    });
+    const tree = button.default({ symbol: "AAPL", company: "Apple", isInWatchlist: false, onAuthRequired: () => { closedSearch++; } });
+    await tree.props.onClick({ preventDefault() {}, stopPropagation() {} });
+    assert.equal(writes, member ? 1 : 0);
+    assert.equal(state[0], false);
+    assert.equal(state[1], false);
+    assert.equal(destinations[0], "/stocks/AAPL");
+    assert.equal(closedSearch, 1);
+  }
+});

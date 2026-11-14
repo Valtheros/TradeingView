@@ -21,7 +21,7 @@ export default function GuestStockDetails({ symbol, stock }: { symbol: string; s
     <div className="page-heading"><div><h1 className="skeleton-text">{symbol}</h1>{stock && <p className="page-subtitle skeleton-text">{stock.name}</p>}</div></div>
     {!stock ? <section className="guest-news"><h2>{dictionary.guest.outOfCatalog}</h2><p>{dictionary.guest.outOfCatalogDescription}</p><Link className="action-button" href={authHref("/sign-in", `/stocks/${symbol}`)}>{dictionary.signIn.submit}</Link></section> : <>
       <div className="stock-detail-actions"><WatchlistButton symbol={symbol} company={stock.name} isInWatchlist={false} /></div>
-      <div className="chart-surface"><Widget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={config} height={170} showAttribution /></div>
+      <div className="chart-surface guest-symbol-info"><Widget scriptUrl="https://s3.tradingview.com/external-embedding/embed-widget-symbol-info.js" config={config} height={170} showAttribution /></div>
       <StockChart widgetSymbol={stock.tvSymbol} showAttribution />
     </>}
   </div>;
